@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	
+	<script src="./jspdf.js"></script>
+	<script src="https://smtpjs.com/v3/smtp.js"></script>
+	</head>
+
+<body>
+<h1>PDF.js 'Hello, world!' example</h1>
+
+<canvas id="the-canvas"></canvas>
+
+<script>
+let jspdf= new jsPDF();
+function sendEmail(){
+jspdf.text("attachment",20,20);
+let pdfdoc= jspdf.output('dataurl');
+console.log(pdfdoc);
+ Email.send({
+     Host: "smtp.office365.com",
+     Username : "krobert4@sgu.edu",
+     Password : "Greyfalcon88",
+     To : "krobert4@sgu.edu",
+     From : "krobert4@sgu.edu",
+     Subject : "emailSubject",
+     Body : "emailBody",
+     Attachments : [
+     {
+      name : "list.pdf",
+      data : pdfdoc
+
+     }]
+     }).then(function (message) { 
+          alert("mail sent successfully") 
+        }); 
+     
+
+}
+
+</script>
+<form method="post"> 
+    <input type="button" value="Send Email" 
+        onclick="sendEmail()" /> 
+  </form>
+</body>
+
+</html>
