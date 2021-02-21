@@ -35,9 +35,8 @@
 
 
 <script>
-	//1.Declare global variables
-	reportPdf = new jsPDF();
-	reportPdf.setFontSize(11);
+reportPdf = new jsPDF();
+reportPdf.setFontSize(11);
 	xCor=20;
 	yCor=0;
 	successCounter=0;
@@ -46,229 +45,101 @@
 	counter = 0;
 	retryEmail=1;
 	fileName="";
-	fileErrorPdf=false;
-	numReportsError=false;
+	fileErrorPdf="";
+	
 	pageNume=1;//stores the page number of the report
-	//initialize pdfjs worker, The workerSrc property shall be specified.
-	pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
-	// Loaded via <script> tag, create shortcut to access PDF.js exports.
-	// Asynchronous download of PDF
-
 	
 	
-	//2.Perform data validation using Jquery mainly, within the document.ready
+	
+</script>
+<script>
 	$(document).ready(function(){
 		fileList="";
-		//2a. Get the name of the file selected
+		//1. Get the name of the file seleted
 		$("#file-selector").change(function(event){
-			fileList = event.target.files;
-			//2b.Extract the name of the file and check its a pdf file
-			//let FN_temp=fileList[0].name;
-			fileName=fileList[0].name;
-			
-			//for testing number of files in array, there should only be one
+			 fileList = event.target.files;
+			console.log("From jquery"+fileList);
 			for (var c=0;c<fileList.length;c++){
-				console.log("This should only output the PDF file selected: "+fileList[c].name);
+				console.log(fileList[c].name);
 			}
 		
 		});
-		//3.Error checking code on Form submission
-		$("#renderpdfForm").submit(function(event){
-			//3a.When form is submitted prevent submission and process using javascript
-			event.preventDefault();
-			//3b.get array of name/value object pairs for each field
-			var val=$("#renderpdfForm").serializeArray();
-			console.log("Form array "+val);
-			//3c.check that a file was selected and that the file has the correct pdf extension else return
-			if(fileName==""){
-				alert("A file was not selected or the selected file does not have a .pdf extenstion.");
-				//3d. If there is an error with the file, then end execution and allow user to make changes
-				return;
-			}//3e. If in fact a file was selected, then verify the extension
-			else{
-				let FN_Arr=fileName.split(".");//spilt the file name
-				//3f. If file is not a pdf set error variable
-				if(FN_Arr[1].toLowerCase().trim() != "pdf"){//check the extension
-					//fileErrorPdf=true;
-					//console.log(fileErrorPdf);
-					alert("A file was not selected or the selected file does not have a .pdf extenstion.");
-					return;
-				}
-				else{
-					//3g.if file is a pdf then proceed to next field for verification
-				}
-			}
-			//If form is good then move through the other form fields in the array
-			
-			//4. Next, number of reports is fetched
-			numReports=$("#numReports").val();
-			console.log("numReports "+numReports);
-			//4a.verify user entered an appropriate number of reports to send
-			if(numReports=="" || numReports==0 || (typeof numReports == 'undefined')){
-				alert("Please enter a valid number of reports to be sent.");
-				//4b.Stop execution and allow user to reenter number
-				return;
-			}
-			//Next test that the numReports is not more than the number of pages in the pdf and that if it's less then the user is aware
-			//5a.Form the file url
-			var url ="./" + fileList[0].name;
-
-					
-			//open pdf 
-			//loadingTask = pdfjsLib.getDocument(url);
-			//5b. One liner to directly open pdf document and wait until it fully completes before proceeding
-			pdfjsLib.getDocument(url).promise.then(function(pdf) {
-				console.log("The number of pages: "+pdf.numPages);
-				//5c. If the number of reports is more than the number of pages, then notify user and return
-				if(numReports > pdf.numPages){
-					alert("The number of reports you entered is more than the number or pages in pdf file. Pdf pages: "+pdf.numPages);
-					//5d. Stop execution
-					return;
-				}
-				//5e. If the number of reports is less than the number of pages proceed with user's consent
-				else if(numReports < pdf.numPages){
-					//5f.The confirm prompt will return true/false. If true then proceed, else return.
-					if(confirm("The number of reports you entered is less than the number or pages in pdf file. Pdf pages: "+pdf.numPages+". Proceed?")){
-						//5g. move on to test email
-						masterEmail=$("#emailPdf").val();
-						console.log(masterEmail);
-						masterPassword=$("#passwordPdf").val();
-						console.log(masterPassword);
-						
-						
-						//7c. Create promise for verifying credentials
-						validateEmail=new Promise(function(Resolve,Reject){
-							//7d.Try sending an email using the credentials entered
-							Email.send({
-							Host: "smtp.office365.com",
-							Username : masterEmail,
-							Password : masterPassword,
-							To : masterEmail,
-							From : masterEmail,
-							Subject : "Test email to verify your credentials are correct.",
-							Body : "This is test email to verify that your credentials are correct.",
-							}).then(function (message) {
-								//7e. If the email is successfully sent then credentials are good.
-								if(message=="OK"){
-									console.log(message);
-									//7f. Resolve process with the message , Success
-									Resolve("Success");
-								}
-								else{
-									console.log(message);
-									//7f. Reject process with the message , Failure
-									Reject("Failure");
-								
-								}
-							
-							});
-						});//end promise creation,validateEmail
-						/*	Promise.then() takes two arguments, a callback for success and another for failure.
-							Both are optional, so you can add a callback for success or failure only.
-						*/
-						//8. Call the promise to validate email and wait for it's completion
-						validateEmail.then(
-							//8a. The promise returns the functions with the Resolve and Reject message
-							function(msg){
-								console.log("success");
-								if(msg=="Success"){
-									//8b. If the promise returns a success then begin sending reports
-									startingPoint(fileList[0].name);
-								}
-							},
-							function(err){
-								console.log("failure"+err);
-								//8c. If promise returns a failure, then alert user and return
-								if(err=="Failure"){
-									alert("Your credentials were incorrect!");
-									return;
-								}
-							}
-					);//end validateEmail promise
 	
-					
-					}
-					else{
-						//5g. Stop execution and allow the user to reenter
-						return;
-					}
-				}
-				//6.Else takes care of the case where numReport is equal to numPages
-				else{
-					//7. Move on to test email username and password if numreports is equal to number of pdf pages
-					//7a.get the email address
-					masterEmail=$("#emailPdf").val();
-					console.log(masterEmail);
-					//7b. get the email password
-					masterPassword=$("#passwordPdf").val();
-					console.log(masterPassword);
-					console.log(masterEmail+" "+masterPassword);
-					
-					//7c. Create promise for verifying credentials
-					validateEmail=new Promise(function(Resolve,Reject){
-
-						//7d.Try sending an email using the credentials entered
-						Email.send({
-						Host: "smtp.office365.com",
-						Username : masterEmail,
-						Password : masterPassword,
-						To : masterEmail,
-						From : masterEmail,
-						Subject : "Test email to verify your credentials are correct.",
-						Body : "This is test email to verify that your credentials are correct.",
-						}).then(function (message) {
-							//7e. If the email is successfully sent then credentials are good.
-							if(message=="OK"){
-								console.log(message);
-								//7f. Resolve process with the message , Success
-								Resolve("Success");
-							}
-							else{
-								console.log(message);
-								//7f. Reject process with the message , Failure
-								Reject("Failure");
-							
-							}
-						
-						});
-					});//end promise
-					/*	Promise.then() takes two arguments, a callback for success and another for failure.
-						Both are optional, so you can add a callback for success or failure only.
-					*/
-					//8. Call the promise to validate email and wait for it's completion
-					validateEmail.then(
-						//8a. The promise returns the functions with the Resolve and Reject message
-						function(msg){
-							console.log("success");
-							if(msg=="Success"){
-								//8b. If the promise returns a success then begin sending reports
-								startingPoint(fileList[0].name);
-							}
-						},
-						function(err){
-							console.log("failure"+err);
-							//8c. If promise returns a failure, then alert user and return
-							if(err=="Failure"){
-								alert("Your credentials were incorrect!");
-								return;
-							}
-						}
-					);//end validateEmail promise
-					
-				}//end else for processing if numreports=numpages
-				
-				
-				},function(reason){alert(reason);});//end pdfjsLib promise which opened pdf document
-
-		});//end the submit block
-
-	});//end document.ready
-					
+		$("#renderpdfForm").submit(function(event){
+			event.preventDefault();
+			var val=$("#renderpdfForm").serializeArray();
+			for(var i=0;i<val.length;i++){
+				if(val[i].name=="numReports"){
+					numReports=val[i].value;
 					console.log(numReports);
 				
+				}
+				else if(val[i].name=="emailPdf"){
+					masterEmail=val[i].value;
+					console.log(masterEmail);
+				
+				}
+				else if(val[i].name=="passwordPdf"){
+					masterPassword=val[i].value;
+					console.log(masterPassword);
+				
+				}
 			
+			}
+			console.log(masterEmail+" "+masterPassword);
+			//create promise for verifying credentials
+		validateEmail=new Promise(function(Resolve,Reject){
+
+			//try sending an email using the credentials entered
+			Email.send({
+			Host: "smtp.office365.com",
+			Username : masterEmail,
+			Password : masterPassword,
+			To : masterEmail,
+			From : masterEmail,
+			Subject : "Test email to verify your credentials are correct.",
+			Body : "This is test email to verify that your credentials are correct.",
+			}).then(function (message) {
+				if(message=="OK"){
+					console.log(message);
+					Resolve("Success");
+				}
+				else{
+					console.log(message);
+					Reject("Failure");
+				
+				}
 			
+			});
+
+
+
+
+
+		});
+			//after taking input call promise validate Email
+			//Promise.then() takes two arguments, a callback for success and another for failure.
+			//Both are optional, so you can add a callback for success or failure only.
+			validateEmail.then(
+				function(msg){
+					console.log("success");
+					if(msg=="Success"){
+						startingPoint(fileList[0].name);
+					}
+				},
+				function(err){
+					console.log("failure"+err);
+					if(err=="Failure"){
+						alert("Your credentials were incorrect!");
+					}
+				
+				});
 			
+		});
+
+		
+
+	});
 
 </script>
 <script>
