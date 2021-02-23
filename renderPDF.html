@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html>
 	<head>
+				<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+		<!-- jQuery library -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+		<!-- Latest compiled JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+		
 		<script  src="./pdf.js"></script>
 		<script src="./jspdf.debug.js"></script>
 		<!--<script src="./emailtest.js"></script>-->
 		<script src= "./smtp.js"></script> 
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>-->
 
 	</head>
 
-<body>
-<h1>Mass mail reports</h1>
+<body class="container-fluid">
+<div class="container"><h1>Mass mail reports</h1>
 
 <canvas id="the-canvas"></canvas>
 <div id="pdfHolder"></div>
-
-<div>
+</div>
+<div class="container">
 
 	<form id="renderpdfForm">
 	<!-- The `multiple` attribute lets users select multiple files. -->
@@ -36,70 +45,90 @@
 
 
 <script>
+	/* *****************************************************************************/
 	//1.Declare global variables
 	masterCounter=0;
-	stringField='<div id="holderPdf"><br><br>';
-	fileNumberPdf=0;
+	//this variable stores the total number of pdf pages processed across all reports.
+	totalPages=0;
 	reportPdf = new jsPDF();
 	reportPdf.setFontSize(11);
+	//pdf coordinates 
 	xCor=20;
 	yCor=0;
 	successCounter=0;
 	failureCounter=0;
 	failureArray=[];
+	//stores the number of pages processed(failed or successful).It should equal the numreports in order to move to the next pdf file
 	counter = 0;
+	//stores the number of times a failed report should be attempted to be resent
 	retryEmail=1;
+	/* Form validation variables ****************************/
 	fileList="";
+	//this is the field that is used to build the input boxes
+	stringField='<div id="holderPdf"><br><br>';
+	//counter variable that controls how many input boxes are created based on number of files user selected
+	fileNumberPdf=0;
+	//this array stores the number of pages found in each of the pdf files the user provides.
 	pageNumberArray=[];
+	//this variable stores the name of the pdf to be processed, it's now obsolete
 	fileName="";
+	
 	fileErrorPdf=false;
 	numReportsError=false;
+	//this variable will store the number of reports the user entered in the form to send out.
 	numReports=0;
+	//This array stores the number of all reports entered by the user in the form 
 	numReportArr=[];
+	//used as a conditional for file input validation
 	proceed=true;
+	//this conditional controls whether to proceed with email validation after checking the number of reports
+	validateNumReportsTrue=true;
 	pageNume=1;//stores the page number of the report
 	//initialize pdfjs worker, The workerSrc property shall be specified.
 	pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 	// Loaded via <script> tag, create shortcut to access PDF.js exports.
 	// Asynchronous download of PDF
-	loadingTask="";
+	
 	pdf="";
 	/* *******************************************************************************************/
 	//2.Perform data validation using Jquery mainly, within the document.ready
 	$(document).ready(function(){
 		//fileList="";
-		//2a. Get the name/s of the file selected
+		//2a. Get the name/s of the file selected, whenever the user makes a change
 		$("#file-selector").change(function(event){
+			//fileList can also be accessed by javaScript: var file = document.getElementById('fileItem').files[0];
 			fileList = event.target.files;
 			//2b.Extract the name of the file and check its a pdf file
 			//let FN_temp=fileList[0].name;
-			fileName=fileList[0].name;
-			
-			//3c.Loop through fileList check that a file was selected and that the file has the correct pdf extension else return
+			//fileName=fileList[0].name;
+			console.log("proceed "+proceed);
+			//3a.Loop through fileList check that a file was selected and that the file has the correct pdf extension else return
 			for (var c=0;c<fileList.length;c++){
 				console.log("This should only output the PDF file selected: "+fileList[c].name);
-			
+				//3b. first check whether the user selected a file
 				if(fileList[c].name == ""){
-					proceed=false;
-					fileList="";
+					//3c. if no files are selected then set proceed to false
 					
+					//fileList="";
 					alert("A file was not selected or the selected file does not have a .pdf extenstion.");
-					event.target.files=[];
 					//3d. If there is an error with the file, then end execution and allow user to make changes
+					proceed=false;
 					//return;
 					
-				}//3e. If in fact a file was selected, then verify the extension
+				}//3d. If in fact a file was selected, then verify the extension
 				else{
 					let FN_Arr=fileList[c].name.split(".");//spilt the file name
-					//3f. If file is not a pdf set error variable
+					//3e. If file is not a pdf set error variable
 					if(FN_Arr[1].toLowerCase().trim() != "pdf"){//check the extension
 						//fileErrorPdf=true;
 						//console.log(fileErrorPdf);
-						proceed=false;
-						fileList="";
 						
-						alert("A file was not selected or the selected file does not have a .pdf extenstion.");
-						$("#file-selector").files="";
+						
+						alert("A file was selected that does not have a .pdf extenstion."+ fileList[c].name);
+						//3f.Clear the files array on the file iput box if there's a single bad file extention
+						
+						console.log($("#file-selector").files);
+						proceed=false;
 						//return;
 					}
 					else{
@@ -120,60 +149,41 @@
 			/*This is done by calling a recursive function to open the pdfs selected, get their page numbers and build a separate input box for 
 			each pdf so tha tthe user can enter the number of reports. Each page number will be stored in an array for later retrieval.*/
 			if(proceed){
-				//document.getElementById("holderPdf").remove();
+				//remove any existing div as the program is about to create a new one
 				$("#holderPdf").empty();
 				$("#holderPdf").remove();
+				//Reset the stringField string which will be used to build the div and the input boxes. If this is not done this string will store previous divs
+				stringField='<div id="holderPdf"><br><br>';
+				//call createNumReportFields to build the div and its input fields, file Number pdf functions as a counter into the file list array and serves to decide when the 
+				//recursive calls should cease on createNumReportFields
+				//resent the page number array for storing the number of pages in each pdf
+				pageNumberArray=[];
 				createNumReportFields(fileList,fileNumberPdf);
 			
 			}
+			//if proceed is false then either fileList was empty or the the file extension wa not a pdf. If either case is true
+			//then clear the file list and remove any existing fields within the holderPdf div.
 			else{
-			//reintialize to true to begin validation loop on change
+				//clear the files arrays
+				$("#file-selector").files="";
+				//clear the fileList
+				fileList="";
+				
+				$("#holderPdf").empty();
+				$("#holderPdf").remove();
+				//reintialize to true to begin validation again loop on change
 				proceed=true;
+				console.log("File List" +fileList+"File selector: "+$("#file-selector").files);
 			}
 		
-		});
+	});
 	/* *********************************************************************/	
-		/*After the user enters the number of reports they will be validated using a loop. Once all the report numbers are validated then call the other part one
-			at a time to open the pdf and run it.*/
-			function validateNumReports(FL_Arr,PN_Arr){
-				
-				for( var cc=0;cc<FL_Arr.length;cc++){
-					let tmppdf="#input"+cc;
-					numReports=$(tmppdf).val();
-					numReportArr[cc]=numReports;
-					//4.a check number of reports to send is not equl to 0 or empty
-					if(numReports=="" || numReports==0 || (typeof numReports == 'undefined')){
-						alert("Please enter a valid number of reports to be sent.");
-						//4b.Stop execution and allow user to reenter number
-						return;
-					}
-					//4b. Then check If the number of reports is more than the number of pages, then notify user and return
-					else if(numReports > PN_Arr[cc]){
-						alert("The number of reports you entered is more than the number or pages in pdf file. Pdf pages: "+PN_Arr[cc]);
-						//5d. Stop execution
-						return;
-					}
-					//4c. Then check If the number of reports is less than the number of pages proceed with user's consent
-					else if(numReports < PN_Arr[cc]){
-						if(confirm("The number of reports you entered is less than the number or pages in pdf file. Pdf pages: "+PN_Arr[cc]+". Proceed?")){
-							console.log("Agree");
-						}
-						else{
-							return;
-						
-						}
-					
-					}
-					
-				
-			
-				}
-			}
+		
 			/* ****************************************************************************************************/
 			
 			/* *************************************************************/
-			
-		//3.Error checking code on Form submission
+			//3.Error checking code on Form submission. When form is submitted first check that the number of reports were correctly entered, verify email/password and
+			//begin sending reports.
 		$("#renderpdfForm").submit(function(event){
 			//3a.When form is submitted prevent submission and process using javascript
 			event.preventDefault();
@@ -181,16 +191,25 @@
 			var val=$("#renderpdfForm").serializeArray();
 			console.log("Form array "+val);
 			console.log($("#input0").val());
-			
+			//on submission get the current file list
+			//fileList=$("#file-selector").files;
+			console.log(fileList);///
+			//3c. validate number of reports
 			validateNumReports(fileList,pageNumberArray);
+			console.log("Does execution stop");
 			//take UN and password
-			masterEmail=$("#emailPdf").val();
-			console.log(masterEmail);
-			masterPassword=$("#passwordPdf").val();
-			console.log(masterPassword);
-			
+			if(validateNumReportsTrue){
+				masterEmail=$("#emailPdf").val();
+				console.log(masterEmail);
+				masterPassword=$("#passwordPdf").val();
+				console.log(masterPassword);
+				/* This function is used to call starting point and will be called whenever a new pdf file needs to send out.*/
 				validateEmail_Start(fileList);
-			
+			}
+			else{
+				console.log("Final return");
+				return;
+			}
 			
 			
 			
@@ -204,7 +223,7 @@
 					
 					//console.log(numReports);
 				
-			
+	/* ********************************************************************************/		
 			
 			
 
@@ -223,12 +242,68 @@
 		
   });*/
   
+  
+  
+  
+  /*After the user enters the number of reports they will be validated using a loop. Once all the report numbers are validated then call the other part one
+			at a time to open the pdf and run it.*/
+			function validateNumReports(FL_Arr,PN_Arr){
+				validateNumReportsTrue=true;
+				//before validating the number of reports, check that the fileList has a value
+				if(fileList=="" || typeof fileList =='undefined'){
+					alert("You did not select a file");
+					validateNumReportsTrue=false;
+					return;
+				}
+				//loop through the file list array, get the corresponding page number and compare to the number entered by the user.
+				for( var cc=0;cc<FL_Arr.length;cc++){
+					//4a. Get input field value, the number of reports the user entered
+					let tmppdf="#input"+cc;
+					numReports=$(tmppdf).val();
+					numReportArr[cc]=numReports;
+					//4.b First check number of reports to send is not equl to 0 or empty. If it is then return.
+					if(numReports=="" || numReports==0 || (typeof numReports == 'undefined')){
+						alert("Please enter a valid number of reports to be sent.");
+						//4b_1. set control variable to false, so that validate email isn't called automatcially. Rather let user make correction
+						validateNumReportsTrue=false;
+						//4b.Stop execution and allow user to reenter number
+						return;
+					}
+					//4c. Then check If the number of reports is more than the number of pages for the corresponding report, then notify user and return
+					else if(numReports > PN_Arr[cc]){
+						alert("The number of reports you entered is more than the number or pages in pdf file. Pdf pages: "+PN_Arr[cc]);
+						//4b_1. set control variable to false, so that validate email isn't called automatcially. Rather let user make correction
+						validateNumReportsTrue=false;
+						//5d. Stop execution
+						return;
+					}
+					//4c. Then check If the number of reports is less than the number of pages proceed with user's consent
+					else if(numReports < PN_Arr[cc]){
+						if(confirm("The number of reports you entered is less than the number or pages in pdf file. Pdf pages: "+PN_Arr[cc]+". Proceed?")){
+							console.log("Agree");
+						}
+						else{
+							//4b_1. set control variable to false, so that validate email isn't called automatcially. Rather let user make correction
+							validateNumReportsTrue=false;
+							return;
+						
+						}
+					
+					}
+					
+				
+			
+				}
+			}
+  
+  
+  
   /* *********************************************************************************/
   
   function validateEmail_Start(fileList){
 				//reinitialize variables
-					xCor=20;
-					yCor=0;
+					//xCor=20;
+					//yCor=0;
 					successCounter=0;
 					failureCounter=0;
 					failureArray=[];
@@ -273,6 +348,7 @@
 							
 							//8a. The promise returns the functions with the Resolve and Reject message
 							function(msg){
+								//num report array stores the number of reports entered by the user
 								numReports=numReportArr[masterCounter];
 								console.log("numreports before starting point"+numReports);
 								console.log("success");
@@ -295,7 +371,7 @@
 									},
 									function(reason){
 										//give fatal error and proceed to send next report if available
-										alert("There was a fatal error!.The report "+ fileList[masterCounter].name+" . could not be loaded because of" +reason);
+										alert("There was a fatal error!.The report "+ fileList[masterCounter].name+" . could not be loaded because of: " +reason);
 										masterCounter=masterCounter+1;
 										validateEmail_Start(fileList);
 									
@@ -320,6 +396,7 @@
 </script>
 
 <script>
+/* *******************************************************************************************/
 function startingPoint(FN){
 	//create jspdf object for storing pdf
 	fileName=FN;
@@ -345,7 +422,8 @@ function startingPoint(FN){
 		//for(let e=1; e<=numReports;e++){
 			//create new canvas for each request, each pdf page is rendered to its own canvas
 			var canv = document.createElement("CANVAS");
-			var canvName="the-canvas" + pageNume;
+			var canvName="the-canvas" + totalPages;
+			totalPages++;
 			console.log(canvName);
 			canv.setAttribute("id", canvName); 
 			document.body.appendChild(canv);
@@ -359,23 +437,31 @@ function startingPoint(FN){
 		//}
 		//},15000);
 }
-
+/* ***********************************************************************************
+The GateKeeper function is called by generatePdf after it processes and send a single page pdf report.
+GateKeeper uses a counter variable to keep track of the pages processed out of the total number of pages in the pdf.
+if counter is less than numReports then there are still pages to process and so it calls generate report once more.
+If counter is greater than numReports, which shouldn't be, then return and end program immediately.
+If however, counter is equal to numReports then: a) prepare to return reports
+b)check that the number of whole pdfs processed is less than or equal to the number of files entered and if so then start the process again with the next pdf.
+In other words counter keeps track of the number of pages processed and masterCounter the number of pdfs.
+ *********************************************************************************/
 function GateKeeper(counter){
 	console.log("in gatekeeper, counter= "+counter+" numreports=" +numReports);
 	//once last email is sent then generate report
 	if(counter==numReports){
 		console.log(counter +" " + numReports);
 		//default coordinates are in mm units(279 mm long)
-		reportPdf.text(successCounter + " student reports emailed successfully.",xCor,yCor+10);
-		yCor=yCor + 10;
+		reportPdf.text(successCounter + " REPORTS EMAILED SUCCESSFULLY FROM: "+fileList[masterCounter-1].name,xCor,yCor+10);
+		yCor=yCor + 20;
 		//loop through failure array if any
 		if(failureCounter > 0){
 			//if there are errors then call function to try and resend
 			//Resend(failureObj);
-			for(let ru=0; ru <= failureArray.length; ru++){
+			for(let ru=0; ru < failureArray.length; ru++){
 				tot=ru+1;
 				//add failed entry to report
-				reportPdf.text(tot+". "+ failureArray[ru] + ": Email failed: ",xCor,yCor+10);
+				reportPdf.text(tot+". "+ failureArray[ru] + ": REPORTS EMAIL FAILED.",xCor,yCor+10);
 				yCor=yCor+10;
 				//if yCor position is >250mm then go to next page
 				if(yCor>240){
@@ -384,6 +470,7 @@ function GateKeeper(counter){
 					yCor=10;
 				}
 			}
+			yCor=yCor+20;
 		}
 
 
@@ -399,7 +486,8 @@ function GateKeeper(counter){
 		//instead of returning call program to repeat
 		//return;
 		console.log("before validateemaistart");
-		if(masterCounter!=fileList.length){
+		//masterCounter keeps track how many many whole pdfs were processed out of the total number of files selected by the user. WHich is found in fileList
+		if(masterCounter<fileList.length){
 			console.log("in validateemaistart"+fileList.length);
 			validateEmail_Start(fileList);
 		
@@ -411,10 +499,16 @@ function GateKeeper(counter){
 	//if however, there are more reports to send then call generatePDf
 	else if(counter<numReports){
 		var canv = document.createElement("CANVAS");
-		var canvName="the-canvas" + pageNume;
+		//ensure each canvas has a unique id
+		var canvName="the-canvas" + totalPages;
+		//increment totalPages
+		totalPages++;
 		console.log(canvName);
 		canv.setAttribute("id", canvName); 
+		//canv.setAttribute("tabindex", pageNume); 
 		document.body.appendChild(canv);
+		//document.getElementById(canvName).focus({preventScroll:false});
+		//pageNume is the global variable keeping track of the number of pages processed and the canv. filenum is now obsolete 
 		generatePdf(pageNume,canv,fileName);
 		//e++;
 		//console.log("The value of e is GateKeeper: "+e);
@@ -431,8 +525,10 @@ function GateKeeper(counter){
 
 
 }
-
-
+/* **********************************************************************************************
+the filname variable is now obselete within the generate pdf as its no longer being used to load the pdf file,
+instead the the pdf object is now been set in validateEmail_Start function which sets the global reference variable pdf for access within generatePdf
+** ***********************************************************************************************/
 function generatePdf(pageN,canvasnum,fName){
 
 //Every call to the API returns a Promise, which allows asynchronous operations to be handled cleanly.
@@ -466,7 +562,7 @@ var scale = 1.33;
 			//var scale = 1;
 			//the view gives access to the dimension properties of the pdf
 			var viewport = page.getViewport({scale: scale});
-		 
+			
 			// Prepare canvas using PDF page dimensions
 			var canvas = canvasnum; //document.getElementById('the-canvas' + i);
 			var context = canvas.getContext('2d');
@@ -623,7 +719,7 @@ var scale = 1.33;
 						//move  cursor to next line
 						yCor=yCor+10;
 						//if yCor position is >250mm then go to next page
-						if(yCor>240){
+						if(yCor>230){
 						//create new page with default values to pdf and reset y coordinate
 							reportPdf.addPage();
 							//restart staring coordinate
@@ -632,11 +728,12 @@ var scale = 1.33;
 						console.log("Ycol"+yCor);
 						//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
 						counter=counter+1;
-						//increase page number by 1
+						//increase page number by 1. this is the global variable keeping track of the number of pages in the pdf
 						pageNume=pageNume+1;
 						//out success essage to screen
 						printElementRenderPdf(counter+". "+"Email successfully sent to: "+tempTxt);
-						
+						//reset retry email variable to handle the case where an unsuccessful email was successfully sent on the other tries
+						retryEmail=1;
 						//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
 						GateKeeper(counter);
 					
@@ -658,7 +755,7 @@ var scale = 1.33;
 						//if email failed, increment counter and write username
 						failureCounter = failureCounter + 1;
 						failureArray.push(emailArr[1]+" "+ message);
-						console.log(message);
+						console.log(message+"FAILURE ARRAY LENGTH: "+failureArray.length);
 						//add failed pdf and email address as key value pair to object for resending
 						//failureObj[emailArr[1]] = string;
 						//reset retry email variable
@@ -697,19 +794,28 @@ var scale = 1.33;
   //console.error(reason);
 //});
 }
+/* ************************************************************************************/
 
+/* ************************************************************************************/
 function printElementRenderPdf(EleContent){
-	var Ele = document.createElement('P');
+	var Ele = document.createElement('BUTTON');
 	//var canvName="the-canvas" + pageNume;
 	//console.log(canvName);
 	Ele.innerHTML=EleContent; 
 	document.body.appendChild(Ele);
+	var tmp_name="button"+totalPages;
+	Ele.setAttribute("id",tmp_name);
+	totalPages++;
+	console.log(totalPages);
+	//place the focus on the button element
+	document.getElementById(tmp_name).focus({preventScroll:false});
+	//document.getElementById("myButton").focus({preventScroll:false})
 	//generatePdf(pageNume,canv,fileName);
 
 
 }
 
-
+/* **********************************************************************************/
 function createNumReportFields(fileArr,fileNum){
 			console.log("FILE: "+fileNum+"Array length: "+fileArr.length);
 			//if at the end of the fileLis array then out input boxes and return
@@ -748,7 +854,7 @@ function createNumReportFields(fileArr,fileNum){
 
 }
 
-
+/* *******************************************************************************************************************************/
 
 /*RENDER USING SVG
 // Get div#the-svg
