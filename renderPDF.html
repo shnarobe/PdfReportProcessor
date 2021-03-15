@@ -573,6 +573,20 @@ var scale = 1.33;
 			let str=[];
 			let email="";
 			let emailArr=[];
+			/*IF THE CORRECT COLUMN IS NOT PRESENT THEn USE DEFAULTS*/
+			xCorCorrect=0;
+			yCorCorrect=0;
+			xWidthCorrect=0;
+			yCorPerLogic=0;
+			/* */
+			/*Get coordinates for drawing over a random  area
+			let xCorCorrecttemp=0;
+			let yCorCorrecttemp=0;
+			let xWidthCorrecttemp=0;
+			let yCorHeighttemp=0;
+			 */
+			
+			
 			//before rendering page extract text, notice that a call to the api method getTextContent returns a promise which we access by then(the true part of the promise)
 			var textContent = page.getTextContent();
 			//if textContent succeeds then
@@ -602,7 +616,29 @@ var scale = 1.33;
 						//ctx.fillRect(coor,370,70,(imgHeight/2));
 			
 					}
-				
+					/* ************************************************************ RANDOM ELEMENT REMOVAL
+					if(text.items[j].str==("*All points for essays have not been assigned. This may not be the final score.")){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCorCorrecttemp=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCorCorrecttemp=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						xWidthCorrecttemp=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						yCorHeighttemp=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+			
+					}
+					
+					
+					 ************************************************************/
 				
 					if(text.items[j].str.startsWith("Performance Logic:")){
 					
@@ -661,6 +697,13 @@ var scale = 1.33;
 			//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
 			//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
 			yCoor=Math.abs(yCorUsername-yCorCorrect);
+			
+			/* CODE FOR REMOVING RANDOM ELEMENT******************************************
+			yCoortemp=Math.abs(yCorUsername-yCorCorrecttemp);
+			ctx.fillRect(xCorCorrecttemp,(yCoortemp+30),xWidthCorrecttemp+2,yCorHeighttemp);
+		 ********************************************/
+			
+			
 			//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
 			ctx.fillRect(xCorCorrect,(yCoor+20),xWidthCorrect+2,Math.abs(yCorCorrect-yCorPerLogic)-10);
 			console.log("xStart: "+xCorCorrect + "xWidth: "+ xWidthCorrect + "Height: "+Math.abs(yCorCorrect-yCorPerLogic)+"start y: "+yCoor);
