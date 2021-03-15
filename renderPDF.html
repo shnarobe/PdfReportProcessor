@@ -579,12 +579,17 @@ var scale = 1.33;
 			xWidthCorrect=0;
 			yCorPerLogic=0;
 			/* */
-			/*Get coordinates for drawing over a random  area
-			let xCorCorrecttemp=0;
-			let yCorCorrecttemp=0;
-			let xWidthCorrecttemp=0;
-			let yCorHeighttemp=0;
-			 */
+			/*Get coordinates for drawing over a random  area ******************************************************************/
+			let xCoordinate=0;
+			let yCoordinate=0;
+			let ElementWidth=0;
+			let ElementHeight=0;
+			
+			let xCoordinate1=0;
+			let yCoordinate1=0;
+			let ElementWidth1=0;
+			let ElementHeight1=0;
+			 /* **************************************************************************************/
 			
 			
 			//before rendering page extract text, notice that a call to the api method getTextContent returns a promise which we access by then(the true part of the promise)
@@ -612,6 +617,7 @@ var scale = 1.33;
 						//set the default limit of the y coordinate to be 20 pixels
 						//There is at least a 20 px buffer between the correct column and the end of the page
 						yCorPerLogic=20;
+						console.log("CORRECT COLUMN MATCHED Matched");
 						// coor1=parseInt(text.items[j].transform[5])*1.33;
 						//ctx.fillRect(coor,370,70,(imgHeight/2));
 			
@@ -639,6 +645,49 @@ var scale = 1.33;
 					
 					
 					 ************************************************************/
+					 if(text.items[j].str.startsWith("StdDev")){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCoordinate=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCoordinate=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						ElementWidth=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						ElementHeight=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						console.log("StdDev Matched");
+					}
+					
+					 if(text.items[j].str=="My Score"){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCoordinate1=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCoordinate1=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						ElementWidth1=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						ElementHeight1=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						console.log("My Score Matched. Y: "+yCoordinate1+ "X "+xCoordinate1);
+			
+					}
+					 
+					 
+					 /* **************************************************************************************************************************************/
 				
 					if(text.items[j].str.startsWith("Performance Logic:")){
 					
@@ -693,17 +742,33 @@ var scale = 1.33;
 			console.log('Page rendered');
 			//drawing over the corrrect column
 			var ctx = canvas.getContext("2d");
-			ctx.fillStyle = "#FFFFFF";
+			ctx.fillStyle = "#000000";
 			//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
 			//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
 			yCoor=Math.abs(yCorUsername-yCorCorrect);
 			
-			/* CODE FOR REMOVING RANDOM ELEMENT******************************************
-			yCoortemp=Math.abs(yCorUsername-yCorCorrecttemp);
-			ctx.fillRect(xCorCorrecttemp,(yCoortemp+30),xWidthCorrecttemp+2,yCorHeighttemp);
-		 ********************************************/
+			/* CODE FOR REMOVING RANDOM ELEMENT******************************************/
+			
+			if(yCoordinate>0){
+				//Subtract the y coordinates from the image height and correct columns to get the starting y coordinate for the correct column
+				yCoordinate=Math.abs(imgHeight-yCoordinate)+10;
+				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
+				ctx.fillRect(xCoordinate,yCoordinate,imgWidth,ElementHeight);
+				console.log("Y COORDINATE1 IS "+yCoordinate);
+			}	
 			
 			
+			if(yCoordinate1>0){
+				yCoordinate1=Math.abs(imgHeight-yCoordinate1)-40;
+				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
+				ctx.fillRect(xCoordinate1+(ElementWidth1*2),yCoordinate1,(ElementWidth1*4),ElementHeight1+70);
+				console.log("Y COORDINATE IS "+yCoordinate1);
+			}
+			
+			
+		/*  CODE FOR REMOVING RANDOM ELEMENT********************************************/
+			
+				ctx.fillStyle = "#FFFFFF";
 			//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
 			ctx.fillRect(xCorCorrect,(yCoor+20),xWidthCorrect+2,Math.abs(yCorCorrect-yCorPerLogic)-10);
 			console.log("xStart: "+xCorCorrect + "xWidth: "+ xWidthCorrect + "Height: "+Math.abs(yCorCorrect-yCorPerLogic)+"start y: "+yCoor);

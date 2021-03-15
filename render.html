@@ -1,81 +1,534 @@
 <!DOCTYPE html>
 <html>
 	<head>
+				<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+		<!-- jQuery library -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+		<!-- Latest compiled JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+		
 		<script  src="./pdf.js"></script>
 		<script src="./jspdf.debug.js"></script>
 		<!--<script src="./emailtest.js"></script>-->
 		<script src= "./smtp.js"></script> 
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>-->
 
 	</head>
 
-<body>
-<h1>Mass mail reports</h1>
+<body class="container-fluid">
+<div class="container"><h1>Mass mail reports</h1>
 
 <canvas id="the-canvas"></canvas>
 <div id="pdfHolder"></div>
+</div>
+<div class="container">
 
-<!-- The `multiple` attribute lets users select multiple files. -->
-<input type="file" id="file-selector" >
+	<form id="renderpdfForm">
+	<!-- The `multiple` attribute lets users select multiple files. -->
+		<label for="filePdf">Enter the file location:</label><br>
+		<input type="file" id="file-selector" name="filePdf" multiple><br>
+		
+	  <!--<label for="numReports">Enter the number of reports that will be sent out:</label><br>
+	  <input type="number" id="numReports" name="numReports" ><br>-->
+	  <label for="emailPdf">Enter your email address:</label><br>
+	  <input type="email" id="emailPdf" name="emailPdf" ><br>
+	   <label for="passwordPdf">Enter your email password:</label><br>
+	  <input type="password" id="passwordPdf" name="passwordPdf" ><br><br>
+	  <input type="submit">
+  
+	</form>
+
+</div>
+
+
 <script>
-	let reportPdf = new jsPDF();
-	let xCor=20;
-	let yCor=0;
-	let successCounter=0;
-	let failureCounter=0;
-	let failureArray=[];
-	 counter = 0;
+	/* *****************************************************************************/
+	//1.Declare global variables
+	masterCounter=0;
+	//this variable stores the total number of pdf pages processed across all reports.
+	totalPages=0;
+	reportPdf = new jsPDF();
+	reportPdf.setFontSize(11);
+	//pdf coordinates 
+	xCor=20;
+	yCor=0;
+	successCounter=0;
+	failureCounter=0;
+	failureArray=[];
+	//stores the number of pages processed(failed or successful).It should equal the numreports in order to move to the next pdf file
+	counter = 0;
+	//stores the number of times a failed report should be attempted to be resent
+	retryEmail=1;
+	/* Form validation variables ****************************/
+	fileList="";
+	//this is the field that is used to build the input boxes
+	stringField='<div id="holderPdf"><br><br>';
+	//counter variable that controls how many input boxes are created based on number of files user selected
+	fileNumberPdf=0;
+	//this array stores the number of pages found in each of the pdf files the user provides.
+	pageNumberArray=[];
+	//this variable stores the name of the pdf to be processed, it's now obsolete
+	fileName="";
+	
+	fileErrorPdf=false;
+	numReportsError=false;
+	//this variable will store the number of reports the user entered in the form to send out.
+	numReports=0;
+	//This array stores the number of all reports entered by the user in the form 
+	numReportArr=[];
+	//used as a conditional for file input validation
+	proceed=true;
+	//this conditional controls whether to proceed with email validation after checking the number of reports
+	validateNumReportsTrue=true;
+	pageNume=1;//stores the page number of the report
+	//initialize pdfjs worker, The workerSrc property shall be specified.
+	pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
+	// Loaded via <script> tag, create shortcut to access PDF.js exports.
+	// Asynchronous download of PDF
+	
+	pdf="";
+	/* *******************************************************************************************/
+	//2.Perform data validation using Jquery mainly, within the document.ready
+	$(document).ready(function(){
+		//fileList="";
+		//2a. Get the name/s of the file selected, whenever the user makes a change
+		$("#file-selector").change(function(event){
+			//fileList can also be accessed by javaScript: var file = document.getElementById('fileItem').files[0];
+			fileList = event.target.files;
+			//2b.Extract the name of the file and check its a pdf file
+			//let FN_temp=fileList[0].name;
+			//fileName=fileList[0].name;
+			console.log("proceed "+proceed);
+			//3a.Loop through fileList check that a file was selected and that the file has the correct pdf extension else return
+			for (var c=0;c<fileList.length;c++){
+				console.log("This should only output the PDF file selected: "+fileList[c].name);
+				//3b. first check whether the user selected a file
+				if(fileList[c].name == ""){
+					//3c. if no files are selected then set proceed to false
+					
+					//fileList="";
+					alert("A file was not selected or the selected file does not have a .pdf extenstion.");
+					//3d. If there is an error with the file, then end execution and allow user to make changes
+					proceed=false;
+					//return;
+					
+				}//3d. If in fact a file was selected, then verify the extension
+				else{
+					let FN_Arr=fileList[c].name.split(".");//spilt the file name
+					//3e. If file is not a pdf set error variable
+					if(FN_Arr[1].toLowerCase().trim() != "pdf"){//check the extension
+						//fileErrorPdf=true;
+						//console.log(fileErrorPdf);
+						
+						
+						alert("A file was selected that does not have a .pdf extenstion."+ fileList[c].name);
+						//3f.Clear the files array on the file iput box if there's a single bad file extention
+						
+						console.log($("#file-selector").files);
+						proceed=false;
+						//return;
+					}
+					else{
+						//3g.if file is a pdf then proceed to next field for verification
+						//let newField=document.createElement("INPUT");
+						//newField.setAttribute("Id","input"+c);
+						
+						
+					}
+				}
+				console.log("LOOP");
+			}
+			console.log("OUTSIDE LOOP");
+			//remove the div holder before possibly createing a new one
+			//$("#holderPdf").empty();
+		
+			//2c.After validating the fields are not empty and have a pdf extension, build the input boxes for the fileSelector
+			/*This is done by calling a recursive function to open the pdfs selected, get their page numbers and build a separate input box for 
+			each pdf so tha tthe user can enter the number of reports. Each page number will be stored in an array for later retrieval.*/
+			if(proceed){
+				//remove any existing div as the program is about to create a new one
+				$("#holderPdf").empty();
+				$("#holderPdf").remove();
+				//Reset the stringField string which will be used to build the div and the input boxes. If this is not done this string will store previous divs
+				stringField='<div id="holderPdf"><br><br>';
+				//call createNumReportFields to build the div and its input fields, file Number pdf functions as a counter into the file list array and serves to decide when the 
+				//recursive calls should cease on createNumReportFields
+				//resent the page number array for storing the number of pages in each pdf
+				pageNumberArray=[];
+				createNumReportFields(fileList,fileNumberPdf);
+			
+			}
+			//if proceed is false then either fileList was empty or the the file extension wa not a pdf. If either case is true
+			//then clear the file list and remove any existing fields within the holderPdf div.
+			else{
+				//clear the files arrays
+				$("#file-selector").files="";
+				//clear the fileList
+				fileList="";
+				
+				$("#holderPdf").empty();
+				$("#holderPdf").remove();
+				//reintialize to true to begin validation again loop on change
+				proceed=true;
+				console.log("File List" +fileList+"File selector: "+$("#file-selector").files);
+			}
+		
+	});
+	/* *********************************************************************/	
+		
+			/* ****************************************************************************************************/
+			
+			/* *************************************************************/
+			//3.Error checking code on Form submission. When form is submitted first check that the number of reports were correctly entered, verify email/password and
+			//begin sending reports.
+		$("#renderpdfForm").submit(function(event){
+			//3a.When form is submitted prevent submission and process using javascript
+			event.preventDefault();
+			//3b.get array of name/value object pairs for each field
+			var val=$("#renderpdfForm").serializeArray();
+			console.log("Form array "+val);
+			console.log($("#input0").val());
+			//on submission get the current file list
+			//fileList=$("#file-selector").files;
+			console.log(fileList);///
+			//3c. validate number of reports
+			validateNumReports(fileList,pageNumberArray);
+			console.log("Does execution stop");
+			//take UN and password
+			if(validateNumReportsTrue){
+				masterEmail=$("#emailPdf").val();
+				console.log(masterEmail);
+				masterPassword=$("#passwordPdf").val();
+				console.log(masterPassword);
+				/* This function is used to call starting point and will be called whenever a new pdf file needs to send out.*/
+				validateEmail_Start(fileList);
+			}
+			else{
+				console.log("Final return");
+				return;
+			}
+			
+			
+			
+			//console.log("hurry");
+			
+			//If form is good then move through the other form fields in the array
+			
+		});//end the submit block
+
+	});//end document.ready
+					
+					//console.log(numReports);
+				
+	/* ********************************************************************************/		
+			
+			
+
+</script>
+<script>
+	
+	 //object to store pdfs that need resending.
+	failureObj={};
 	//file inpt box
-  const fileSelector = document.getElementById('file-selector');
+ /* const fileSelector = document.getElementById('file-selector');
   fileSelector.addEventListener('change', (event) => {
     const fileList = event.target.files;
     console.log(fileList[0].name);
 	//call function providing file location
 	startingPoint(fileList[0].name);
 		
-  });
+  });*/
+  
+  
+  
+  
+  /*After the user enters the number of reports they will be validated using a loop. Once all the report numbers are validated then call the other part one
+			at a time to open the pdf and run it.*/
+			function validateNumReports(FL_Arr,PN_Arr){
+				validateNumReportsTrue=true;
+				//before validating the number of reports, check that the fileList has a value
+				if(fileList=="" || typeof fileList =='undefined'){
+					alert("You did not select a file");
+					validateNumReportsTrue=false;
+					return;
+				}
+				//loop through the file list array, get the corresponding page number and compare to the number entered by the user.
+				for( var cc=0;cc<FL_Arr.length;cc++){
+					//4a. Get input field value, the number of reports the user entered
+					let tmppdf="#input"+cc;
+					numReports=$(tmppdf).val();
+					numReportArr[cc]=numReports;
+					//4.b First check number of reports to send is not equl to 0 or empty. If it is then return.
+					if(numReports=="" || numReports==0 || (typeof numReports == 'undefined')){
+						alert("Please enter a valid number of reports to be sent.");
+						//4b_1. set control variable to false, so that validate email isn't called automatcially. Rather let user make correction
+						validateNumReportsTrue=false;
+						//4b.Stop execution and allow user to reenter number
+						return;
+					}
+					//4c. Then check If the number of reports is more than the number of pages for the corresponding report, then notify user and return
+					else if(numReports > PN_Arr[cc]){
+						alert("The number of reports you entered is more than the number or pages in pdf file. Pdf pages: "+PN_Arr[cc]);
+						//4b_1. set control variable to false, so that validate email isn't called automatcially. Rather let user make correction
+						validateNumReportsTrue=false;
+						//5d. Stop execution
+						return;
+					}
+					//4c. Then check If the number of reports is less than the number of pages proceed with user's consent
+					else if(numReports < PN_Arr[cc]){
+						if(confirm("The number of reports you entered is less than the number or pages in pdf file. Pdf pages: "+PN_Arr[cc]+". Proceed?")){
+							console.log("Agree");
+						}
+						else{
+							//4b_1. set control variable to false, so that validate email isn't called automatcially. Rather let user make correction
+							validateNumReportsTrue=false;
+							return;
+						
+						}
+					
+					}
+					
+				
+			
+				}
+			}
+  
+  
+  
+  /* *********************************************************************************/
+  
+  function validateEmail_Start(fileList){
+				//reinitialize variables
+					//xCor=20;
+					//yCor=0;
+					successCounter=0;
+					failureCounter=0;
+					failureArray=[];
+					counter = 0;
+					retryEmail=1;
+					pageNume=1;
+					//reportPdf1 = new jsPDF();
+			
+				//7c. Create promise for verifying credentials
+						validateEmail=new Promise(function(Resolve,Reject){
+							//7d.Try sending an email using the credentials entered
+							Email.send({
+							Host: "smtp.office365.com",
+							Username : masterEmail,
+							Password : masterPassword,
+							To : masterEmail,
+							From : masterEmail,
+							Subject : "Test email to verify your credentials are correct.",
+							Body : "This is test email to verify that your credentials are correct. A batch of reports are about to be sent.",
+							}).then(function (message) {
+								//7e. If the email is successfully sent then credentials are good.
+								if(message=="OK"){
+									console.log(message);
+									//7f. Resolve process with the message , Success
+									Resolve("Success");
+								}
+								else{
+									console.log(message);
+									//7f. Reject process with the message , Failure
+									Reject("Failure");
+								
+								}
+							
+							});
+						});//end promise creation,validateEmail
+						/*	Promise.then() takes two arguments, a callback for success and another for failure.
+							Both are optional, so you can add a callback for success or failure only.
+						*/
+			
+					//8. Call the promise to validate email and wait for it's completion
+						validateEmail.then(
+							
+							//8a. The promise returns the functions with the Resolve and Reject message
+							function(msg){
+								//num report array stores the number of reports entered by the user
+								numReports=numReportArr[masterCounter];
+								console.log("numreports before starting point"+numReports);
+								console.log("success");
+								if(msg=="Success"){
+								/* IMPORTANT: after successful verifcation, the pdf_doc object will be assigned to the global pdf object for reference throughout the application.
+								Then startPoint can be called.The masterCounter variable stores the number of files that have been processed so far*/
+								//get the file name from the fileList array and create the url
+								fileUrl="./" + fileList[masterCounter].name;
+								//download and open the pdf 
+								pdfjsLib.getDocument(fileUrl).promise.then(function(pdf_doc_temp1) {
+									//once succcessfully opened, assign to global variable pdf
+									pdf=pdf_doc_temp1;
+									//possible store the numof reports entered at the begiinging in local array for access here
+									//t_pdf="input"+masterCounter;
+									//numReports=$(t_pdf).val();
+									console.log("master Counter: "+masterCounter);
+									//8b. If the promise returns a success then begin sending reports by calling starting point
+									startingPoint(fileList[masterCounter].name);
+									masterCounter=masterCounter+1;
+									},
+									function(reason){
+										//give fatal error and proceed to send next report if available
+										alert("There was a fatal error!.The report "+ fileList[masterCounter].name+" . could not be loaded because of: " +reason);
+										masterCounter=masterCounter+1;
+										validateEmail_Start(fileList);
+									
+									}
+									);//end pdfjsLib promise
+								}
+							},
+							function(err){
+								console.log("failure"+err);
+								//8c. If promise returns a failure, then alert user and return
+								if(err=="Failure"){
+									alert("Your credentials were incorrect!");
+									return;
+								}
+							}
+					);//end validateEmail promise
+			
+			
+			}
+  
+  /* *********************************************************************************/
 </script>
 
 <script>
-function startingPoint(fileName){
-//create jspdf object for storing pdf
-let docimg = new jsPDF();
-numReports=prompt("Please enter the number of reports you're sending out.");
-masterEmail=prompt("Please enter your full email address, e.g jdoe@sgu.edu");
-masterPassword=prompt("Please enter your password");
+/* *******************************************************************************************/
+function startingPoint(FN){
+	//create jspdf object for storing pdf
+	fileName=FN;
+	let docimg = new jsPDF();
+	//numReports=prompt("Please enter the number of reports you're sending out.");
+	//masterEmail=prompt("Please enter your full email address, e.g jdoe@sgu.edu");
+	//masterPassword=prompt("Please enter your password");
 
-EmailText=`Dear student, <br><br>
+	EmailText=`Dear student, <br><br>
 
-Your exam results have been released. To view the results:<br>
-1. Open the PDF attachment in your web browser<br>
-2. or download the PDF attachment on your device<br>
-3. and open it using your preferred PDF software. <br><br>
+	Your exam results have been released. To view the results:<br>
+	1. Open the PDF attachment in your web browser<br>
+	2. or download the PDF attachment on your device<br>
+	3. and open it using your preferred PDF software. <br><br>
 
-If you encounter any issues, please contact Jason Lucas (jlucas001@sgu.edu), Krishna Robertson (krobert4@sgu.edu) and cc Kevin Parke (kparke2@sgu.edu).<br><br>
+	If you encounter any issues, please contact Jason Lucas (jlucas001@sgu.edu), Krishna Robertson (krobert4@sgu.edu) and cc Kevin Parke (kparke2@sgu.edu).<br><br>
 
-Department of Clinical Skills.`;
+	Department of Clinical Skills.`;
 
-e=1;
+	//e=1;
 		//loop through entire list of pages
-		var inter=setInterval(function(){
+		//var inter=setInterval(function(){
 		//for(let e=1; e<=numReports;e++){
 			//create new canvas for each request, each pdf page is rendered to its own canvas
 			var canv = document.createElement("CANVAS");
-			var canvName="the-canvas" + e;
+			var canvName="the-canvas" + totalPages;
+			totalPages++;
 			console.log(canvName);
 			canv.setAttribute("id", canvName); 
 			document.body.appendChild(canv);
-			generatePdf(e,canv,fileName);
+			generatePdf(pageNume,canv,fileName);
 			
-			if(e==numReports){
+			/*if(e==numReports){
 				clearInterval(inter);
-			}
-			e++;
+			} */
+			//e++;
 
 		//}
-		},10000);
+		//},15000);
 }
+/* ***********************************************************************************
+The GateKeeper function is called by generatePdf after it processes and send a single page pdf report.
+GateKeeper uses a counter variable to keep track of the pages processed out of the total number of pages in the pdf.
+if counter is less than numReports then there are still pages to process and so it calls generate report once more.
+If counter is greater than numReports, which shouldn't be, then return and end program immediately.
+If however, counter is equal to numReports then: a) prepare to return reports
+b)check that the number of whole pdfs processed is less than or equal to the number of files entered and if so then start the process again with the next pdf.
+In other words counter keeps track of the number of pages processed and masterCounter the number of pdfs.
+ *********************************************************************************/
+function GateKeeper(counter){
+	console.log("in gatekeeper, counter= "+counter+" numreports=" +numReports);
+	//once last email is sent then generate report
+	if(counter==numReports){
+		console.log(counter +" " + numReports);
+		//default coordinates are in mm units(279 mm long)
+		reportPdf.text(successCounter + " REPORTS EMAILED SUCCESSFULLY FROM: "+fileList[masterCounter-1].name,xCor,yCor+10);
+		yCor=yCor + 20;
+		//loop through failure array if any
+		if(failureCounter > 0){
+			//if there are errors then call function to try and resend
+			//Resend(failureObj);
+			for(let ru=0; ru < failureArray.length; ru++){
+				tot=ru+1;
+				//add failed entry to report
+				reportPdf.text(tot+". "+ failureArray[ru] + ": REPORTS EMAIL FAILED.",xCor,yCor+10);
+				yCor=yCor+10;
+				//if yCor position is >250mm then go to next page
+				if(yCor>240){
+				//create new page with default values to pdf and reset y coordinate
+					reportPdf.addPage();
+					yCor=10;
+				}
+			}
+			yCor=yCor+20;
+		}
 
+
+		outputPdf=reportPdf.output("datauri");
+		
+		var string1 = outputPdf;// doc.output('datauristring');
+		var embed = "<embed width='100%' height='100%' src='" + string1 + "'/>"
+		var x = window.open();
+		x.document.open();
+		x.document.write(embed);
+		x.document.close();
+		//document.body.appendChild(embed);
+		//instead of returning call program to repeat
+		//return;
+		console.log("before validateemaistart");
+		//masterCounter keeps track how many many whole pdfs were processed out of the total number of files selected by the user. WHich is found in fileList
+		if(masterCounter<fileList.length){
+			console.log("in validateemaistart"+fileList.length);
+			validateEmail_Start(fileList);
+		
+		}
+		else{
+			return;
+		}
+	}
+	//if however, there are more reports to send then call generatePDf
+	else if(counter<numReports){
+		var canv = document.createElement("CANVAS");
+		//ensure each canvas has a unique id
+		var canvName="the-canvas" + totalPages;
+		//increment totalPages
+		totalPages++;
+		console.log(canvName);
+		canv.setAttribute("id", canvName); 
+		//canv.setAttribute("tabindex", pageNume); 
+		document.body.appendChild(canv);
+		//document.getElementById(canvName).focus({preventScroll:false});
+		//pageNume is the global variable keeping track of the number of pages processed and the canv. filenum is now obsolete 
+		generatePdf(pageNume,canv,fileName);
+		//e++;
+		//console.log("The value of e is GateKeeper: "+e);
+	
+	}
+	else{
+		return;
+	
+	}
+
+
+	
+//return;
+
+
+}
+/* **********************************************************************************************
+the filname variable is now obselete within the generate pdf as its no longer being used to load the pdf file,
+instead the the pdf object is now been set in validateEmail_Start function which sets the global reference variable pdf for access within generatePdf
+** ***********************************************************************************************/
 function generatePdf(pageN,canvasnum,fName){
 
 //Every call to the API returns a Promise, which allows asynchronous operations to be handled cleanly.
@@ -83,218 +536,350 @@ function generatePdf(pageN,canvasnum,fName){
 // header on that server.
 var url ="./" + fName;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
+//pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 // Loaded via <script> tag, create shortcut to access PDF.js exports.
 // Asynchronous download of PDF
 var pageNumber;
-let loadingTask;
+//let loadingTask;
 var scale = 1.33;
 
-
-	loadingTask = pdfjsLib.getDocument(url);
-	loadingTask.promise.then(function(pdf) {
-		console.log('PDF loaded');
+	//open pdf 
+	//loadingTask = pdfjsLib.getDocument(url);
+	//once pdf has being downloaded/open successfully, a pdfjs object is returned, pdf
+	//loadingTask.promise.then(function(pdf) {
+		console.log('in generate PDF');
   
 		// Fetch the first page
   
 	
 		pageNumber = pageN;
-		pdf.getPage(pageNumber).then(function(page) {
-		console.log('Page loaded');
-		//console.log(pdf.numPages);
+		//when the getPage method succeeds call the then...note that the then was defined in the getPage method.
+		//Upon success the getPage method returns a single pdf page for processing
+		pdf.getPage(pageNumber).then(function(page) {/*1.GET THE INDIVIDUAL PDG PAGE*/
+			console.log('Page ' +pageNumber +' loaded');
+			//console.log(pdf.numPages);
     
-		//var scale = 1;
-		//the view gives access to the dimension properties of the pdf
-		 var viewport = page.getViewport({scale: scale});
-		 
-		// Prepare canvas using PDF page dimensions
-		var canvas = canvasnum; //document.getElementById('the-canvas' + i);
-		var context = canvas.getContext('2d');
-		canvas.height = viewport.height;
-		canvas.width = viewport.width;
-		imgWidth= viewport.width;
-		imgHeight= viewport.height;
-		let str=[];
-		let email="";
-		let emailArr=[];
-		//before rendering page extract text, notice that a call to the api method getTextContent returns a promise which we access by then(the true part of the promise)
-		var textContent = page.getTextContent();
-		textContent.then(function (text) {
-		console.log('Page content parsed' );
-		for(let j = 0; j < text.items.length; j++) {
-			str.push(text.items[j].str);
-			//if the username is found, then find the username and create the email address
-			console.log(text.items[j]);
+			//var scale = 1;
+			//the view gives access to the dimension properties of the pdf
+			var viewport = page.getViewport({scale: scale});
 			
-			if(text.items[j].str==("CORRECT")){
-				//console.log(parseInt(text.items[j].transform[4]));
-				//var ctx = canvas.getContext("2d");
-				//ctx.fillStyle = "#000000";
-				//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
-				//x-coor, y-coor, width, h.
-				//get the x coordinate of the correct column
-				 xCorCorrect=parseInt(text.items[j].transform[4])*scale;
-				 //get the y coordinate for the correct column
-				 yCorCorrect=text.items[j].transform[5] * scale;
-				 //get the width of the correct column
-				 xWidthCorrect=parseInt(text.items[j].width)*scale;
-				 yCorPerLogic=20;
-				// coor1=parseInt(text.items[j].transform[5])*1.33;
-				//ctx.fillRect(coor,370,70,(imgHeight/2));
+			// Prepare canvas using PDF page dimensions
+			var canvas = canvasnum; //document.getElementById('the-canvas' + i);
+			var context = canvas.getContext('2d');
+			canvas.height = viewport.height;
+			canvas.width = viewport.width;
+			imgWidth= viewport.width;
+			imgHeight= viewport.height;
+			let str=[];
+			let email="";
+			let emailArr=[];
+			/*IF THE CORRECT COLUMN IS NOT PRESENT THEn USE DEFAULTS*/
+			xCorCorrect=0;
+			yCorCorrect=0;
+			xWidthCorrect=0;
+			yCorPerLogic=0;
+			/* */
+			/*Get coordinates for drawing over a random  area ******************************************************************/
+			let xCoordinate=0;
+			let yCoordinate=0;
+			let ElementWidth=0;
+			let ElementHeight=0;
 			
-				}
-				
-				
-				if(text.items[j].str.startsWith("Performance Logic:")){
-				
-				//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
-				//x-coor, y-coor, width, h.
-				//get the y coordinate of the performance logic column
-				 yCorPerLogic=parseInt(text.items[j].transform[4])* scale;
-			
-				}
-				
+			let xCoordinate1=0;
+			let yCoordinate1=0;
+			let ElementWidth1=0;
+			let ElementHeight1=0;
+			 /* **************************************************************************************/
 			
 			
-			if(text.items[j].str.startsWith("Username:")){
-				//console.log(text.items[j].str);
-				email=text.items[j].str;
-				emailArr=email.split(":");
-				//console.log(emailArr);
-				emailArr[1]=emailArr[1].trim();
-				//find y coordinates for of username, subtract y coordinates from correct and username column
-				yCorUsername=text.items[j].transform[5]*scale;
-				if(emailArr[1]==""){
-					//if the username is null then get the text on the next line-height
-					tempStr=text.items[j+1].str;
-					tempStr=tempStr.trim();
-					emailArr[1]=tempStr.concat("@sgu.edu");
-					console.log(emailArr[1]);
+			//before rendering page extract text, notice that a call to the api method getTextContent returns a promise which we access by then(the true part of the promise)
+			var textContent = page.getTextContent();
+			//if textContent succeeds then
+			textContent.then(function (text) {/*2.GET THE CONTENTS OF THE PAGE*/
+				console.log('Page content parsed' );
+				for(let j = 0; j < text.items.length; j++) {
+					//str.push(text.items[j].str);
 					
-				}
-				else{//if username is present then build email as normal. Builds email address from captured email on line 154
-				emailArr[1]=emailArr[1].concat("@sgu.edu");
-				console.log(emailArr[1]);
-				}
+					console.log(text.items[j]);
+					//Find x and y coordinates of the correct column
+					if(text.items[j].str==("CORRECT")){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCorCorrect=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCorCorrect=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						xWidthCorrect=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						yCorPerLogic=20;
+						console.log("CORRECT COLUMN MATCHED Matched");
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+			
+					}
+					/* ************************************************************ RANDOM ELEMENT REMOVAL
+					if(text.items[j].str==("*All points for essays have not been assigned. This may not be the final score.")){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCorCorrecttemp=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCorCorrecttemp=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						xWidthCorrecttemp=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						yCorHeighttemp=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+			
+					}
+					
+					
+					 ************************************************************/
+					 if(text.items[j].str.startsWith("StdDev")){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCoordinate=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCoordinate=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						ElementWidth=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						ElementHeight=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						console.log("StdDev Matched");
+					}
+					
+					 if(text.items[j].str=="My Score"){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCoordinate1=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCoordinate1=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						ElementWidth1=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						ElementHeight1=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						console.log("My Score Matched. Y: "+yCoordinate1+ "X "+xCoordinate1);
+			
+					}
+					 
+					 
+					 /* **************************************************************************************************************************************/
+				
+					if(text.items[j].str.startsWith("Performance Logic:")){
+					
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the y coordinate of the performance logic column
+						 yCorPerLogic=parseInt(text.items[j].transform[5])* scale;
+				
+					}
 				
 			
-			}
-			
-		  
-        }
-	
-				
-    });
-	imgWidth=imgWidth - 30;
-	imgHeight= imgHeight - 20;
-	//now that you have the email address
-    // Render PDF page into canvas context so that you can extract image to add to pdf
-    var renderContext = {
-      canvasContext: context,
-      viewport: viewport
-    };
-    var renderTask = page.render(renderContext);
-    renderTask.promise.then(function () {
-		console.log('Page rendered');
-		//drawing over the corrrect column
-		var ctx = canvas.getContext("2d");
-		ctx.fillStyle = "#FFFFFF";
-		//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
-		//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
-		yCoor=Math.abs(yCorUsername-yCorCorrect);
-		//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
-		ctx.fillRect(xCorCorrect,(yCoor+20),xWidthCorrect+2,Math.abs(yCorCorrect-yCorPerLogic)-10);
-		console.log("xStart: "+xCorCorrect + "xWidth: "+ xWidthCorrect + "Height: "+Math.abs(yCorCorrect-yCorPerLogic)+"start y: "+yCoor);
-		console.log(imgWidth  +" :" + imgHeight);
-		var img = new Image(); 
-		img.src = canvas.toDataURL("image/jpeg"); 
-		img.setAttribute("width",imgWidth);
-		img.setAttribute("height",imgHeight);
-		document.body.appendChild(img);
-	 
-		imgWidth=imgWidth - 30;
-		imgHeight= imgHeight - 30;
-		//add image from cancas to pdf
-		docimg= new jsPDF('p','pt','a4');
-		docimg.addImage(img,"JPEG",0,10);
-	
-		//create pdf and output to string,base64 encoding
-		var string=docimg.output('datauri');
-		
-		Email.send({
-		Host: "smtp.office365.com",
-		Username : masterEmail,
-		Password : masterPassword,
-		To : emailArr[1],
-		From : masterEmail,
-		Subject : "ExamSoft Strengths and Opportunities Report Released.",
-		Body : EmailText,
-		Attachments : [
-		{
-			name : "Report.pdf",
-			data : string
-
-		}]
-		}).then(function (message) { 
-          console.log("mail sent successfully");
-		  
-		  //clear the canvas
-		/*if (context) {
-			context.clearRect(0, 0, canvas.width, canvas.height);
-			context.beginPath();
-		}*/
-		//remove the image
-		img.remove();
-		//add entry to report
-		let tempTxt=emailArr[1];
-		//check that returned code is 'OK', else an error occurred.
-		if(message=="OK"){
-			successCounter=successCounter + 1;
-		}
-		else{
-			//if email failed, increment counter and write username
-			failureCounter = failureCounter + 1;
-			failureArray.push(emailArr[1]+" "+ message);
-			console.log(message);
-		}
-			//increment after every email is sent
-		 counter=counter+1;
-		 //once last email is sent then generate report
-		if(counter==numReports){
-			console.log(counter +" " + numReports);
-			//default coordinates are in mm units(279 mm long)
-			reportPdf.text(successCounter + " student reports emailed successfully.",xCor,yCor+10);
-			yCor=yCor + 10;
-			//loop through failure array if any
-			if(failureCounter > 0){
-				for(let ru=0; ru <= failureArray.length; ru++){
-					//add failed entry to report
-					reportPdf.text(failureArray[ru] + ": Email failed: ",xCor,yCor+10);
-					yCor=yCor+10;
-					//if yCor position is >250mm then go to next page
-					if(yCor>240){
-					//create new page with default values to pdf and reset y coordinate
-						reportPdf.addPage();
-						yCor=10;
+					//if the username is found, then find the username and create the email address
+					if(text.items[j].str.startsWith("Username:")){
+						//console.log(text.items[j].str);
+						email=text.items[j].str;
+						emailArr=email.split(":");
+						//console.log(emailArr);
+						emailArr[1]=emailArr[1].trim();
+						//find y coordinates for of username, subtract y coordinates from correct and username column
+						yCorUsername=text.items[j].transform[5]*scale;
+						if(emailArr[1]==""){
+							//if the username is null then get the text on the next line-height
+							tempStr=text.items[j+1].str;
+							tempStr=tempStr.trim();
+							emailArr[1]=tempStr.concat("@sgu.edu");
+							console.log(emailArr[1]);
+							
+						}
+						else{//if username is present then build email as normal. Builds email address from captured email on line 154
+							emailArr[1]=emailArr[1].concat("@sgu.edu");
+							console.log(emailArr[1]);
+						}
+						
 					
 					}
-			
+					
+				  
 				}
-			}
-		
-		
-			outputPdf=reportPdf.output("datauri");
+	
+				
+			});
+		imgWidth=imgWidth - 30;
+		imgHeight= imgHeight - 20;
+		//now that you have the email address
+		// Render PDF page into canvas context so that you can extract image to add to pdf
+		var renderContext = {
+		  canvasContext: context,
+		  viewport: viewport
+		};
+		var renderTask = page.render(renderContext);
+		renderTask.promise.then(function () {/*3.RENDER THE PAGE ONTO THE HTML CANVAS*/
+			console.log('Page rendered');
+			//drawing over the corrrect column
+			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#000000";
+			//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+			//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
+			yCoor=Math.abs(yCorUsername-yCorCorrect);
 			
-			var string1 = outputPdf;// doc.output('datauristring');
-			var embed = "<embed width='100%' height='100%' src='" + string1 + "'/>"
-			var x = window.open();
-			x.document.open();
-			x.document.write(embed);
-			x.document.close();
-			//document.body.appendChild(embed);
-	 
+			/* CODE FOR REMOVING RANDOM ELEMENT******************************************/
+			
+			if(yCoordinate>0){
+				//Subtract the y coordinates from the image height and correct columns to get the starting y coordinate for the correct column
+				yCoordinate=Math.abs(imgHeight-yCoordinate)+10;
+				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
+				ctx.fillRect(xCoordinate,yCoordinate,imgWidth,ElementHeight);
+				console.log("Y COORDINATE1 IS "+yCoordinate);
+			}	
+			
+			
+			if(yCoordinate1>0){
+				yCoordinate1=Math.abs(imgHeight-yCoordinate1)-40;
+				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
+				ctx.fillRect(xCoordinate1+(ElementWidth1*2),yCoordinate1,(ElementWidth1*4),ElementHeight1+70);
+				console.log("Y COORDINATE IS "+yCoordinate1);
+			}
+			
+			
+		/*  CODE FOR REMOVING RANDOM ELEMENT********************************************/
+			
+				ctx.fillStyle = "#FFFFFF";
+			//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
+			ctx.fillRect(xCorCorrect,(yCoor+20),xWidthCorrect+2,Math.abs(yCorCorrect-yCorPerLogic)-10);
+			console.log("xStart: "+xCorCorrect + "xWidth: "+ xWidthCorrect + "Height: "+Math.abs(yCorCorrect-yCorPerLogic)+"start y: "+yCoor);
+			console.log(imgWidth  +" :" + imgHeight);
+			console.log("YCorrect: "+yCorCorrect +" YPerLogic "+yCorPerLogic);
+			var img = new Image(); 
+			img.src = canvas.toDataURL("image/jpeg"); 
+			img.setAttribute("width",imgWidth);
+			img.setAttribute("height",imgHeight);
+			document.body.appendChild(img);
+		 
+			imgWidth=imgWidth - 30;
+			imgHeight= imgHeight - 30;
+			//add image from cancas to pdf
+			docimg= new jsPDF('p','pt','a4');
+			docimg.addImage({imageData:img,format:"JPEG",x:0,y:10,compression:"NONE"});
 		
-		}
+			//create pdf and output to string,base64 encoding
+			var string=docimg.output('datauri');
+		
+			Email.send({/*3.1 SEND AN EMAIL WITH THE IMAGE THAT WAS CAPTURED FROM THE HTML CANVAS*/
+			Host: "smtp.office365.com",
+			Username : masterEmail,
+			Password : masterPassword,
+			To : emailArr[1],
+			From : masterEmail,
+			Subject : "ExamSoft Strengths and Opportunities Report Released.",
+			Body : EmailText,
+			Attachments : [
+			{
+				name : "Strengths and Opportunities Report.pdf",
+				data : string
+
+			}]
+			}).then(function (message) { 
+				//called after successfully sending a student email
+			  
+				//clear the canvas
+				/*if (context) {
+					context.clearRect(0, 0, canvas.width, canvas.height);
+					context.beginPath();
+				}*/
+				//remove the image
+				img.remove();
+				//add entry to report
+				let tempTxt=emailArr[1];
+				//check that returned code is 'OK', else an error occurred.
+				if(message=="OK"){  
+						//after a report is successfully sent then update the counter
+						successCounter=successCounter + 1;
+						console.log("mail sent successfully");
+						console.log("after repriot pdf");
+						//once report is successfully mailed then add email to report
+						reportPdf.text(successCounter+". "+tempTxt+ " :Report successfully sent.",xCor,yCor+10);
+						console.log("after repriot pdf");
+						//move  cursor to next line
+						yCor=yCor+10;
+						//if yCor position is >250mm then go to next page
+						if(yCor>230){
+						//create new page with default values to pdf and reset y coordinate
+							reportPdf.addPage();
+							//restart staring coordinate
+							yCor=10;
+						}
+						console.log("Ycol"+yCor);
+						//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
+						counter=counter+1;
+						//increase page number by 1. this is the global variable keeping track of the number of pages in the pdf
+						pageNume=pageNume+1;
+						//out success essage to screen
+						printElementRenderPdf(counter+". "+"Email successfully sent to: "+tempTxt);
+						//reset retry email variable to handle the case where an unsuccessful email was successfully sent on the other tries
+						retryEmail=1;
+						//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
+						GateKeeper(counter);
+					
+				}
+				else{
+					//try sending failed email up to three times
+					if(retryEmail<=3){
+						//1. First remove the canvas element
+						canvas.remove();
+						//img.remove();
+						
+						console.log("The value of PageNume in failure: " + pageNume +"Attempting to resend: "+retryEmail+"counter: "+counter);
+						//3. Call gate keeper again with same value of counter
+						GateKeeper(counter);
+						retryEmail++;
+					}
+					//if third attempt failed then place in report
+					else{
+						//if email failed, increment counter and write username
+						failureCounter = failureCounter + 1;
+						failureArray.push(emailArr[1]+" "+ message);
+						console.log(message+"FAILURE ARRAY LENGTH: "+failureArray.length);
+						//add failed pdf and email address as key value pair to object for resending
+						//failureObj[emailArr[1]] = string;
+						//reset retry email variable
+						retryEmail=1;
+						//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
+						counter=counter+1; //in this case after three tries the report still failed so move on to the next one
+						//move on to the next page
+						pageNume=pageNume+1;
+						printElementRenderPdf(counter+". "+"Email failed: "+emailArr[1]);
+						//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
+						GateKeeper(counter);
+					}
+				}
+				//increment after every email is sent
+				//counter=counter+1;
+				
         }); 
 		
 	//
@@ -305,15 +890,103 @@ var scale = 1.33;
 	//sendEmail(page);
   
   });
- 
-});
+ console.log("Parent promise finished");
+/*},function (reason) {
+  // PDF loading error
+  console.error(reason);
+  alert(reason);
+  return;
+});*/
 //, function (reason) {
   // PDF loading error
   //console.error(reason);
 //});
 }
+/* ************************************************************************************/
+
+/* ************************************************************************************/
+function printElementRenderPdf(EleContent){
+	var Ele = document.createElement('BUTTON');
+	//var canvName="the-canvas" + pageNume;
+	//console.log(canvName);
+	Ele.innerHTML=EleContent; 
+	document.body.appendChild(Ele);
+	var tmp_name="button"+totalPages;
+	Ele.setAttribute("id",tmp_name);
+	totalPages++;
+	console.log(totalPages);
+	//place the focus on the button element
+	document.getElementById(tmp_name).focus({preventScroll:false});
+	//document.getElementById("myButton").focus({preventScroll:false})
+	//generatePdf(pageNume,canv,fileName);
+
+
+}
+
+/* **********************************************************************************/
+function createNumReportFields(fileArr,fileNum){
+			console.log("FILE: "+fileNum+"Array length: "+fileArr.length);
+			//if at the end of the fileLis array then out input boxes and return
+			if(fileNum>=fileArr.length){
+				stringField+='</div>';
+			console.log(stringField);
+			$("#file-selector").after(stringField);
+			//reinitialize fileNumberPdf to 0
+			fileNumberPdf=0;
+				return;
+			}
+	//1. retrieve the file name from the array
+	let fileUrl=fileArr[fileNum].name;
+	pdfjsLib.getDocument(fileUrl).promise.then(function(pdf_doc_temp) {
+		//2.load the pdf from the url
+		//2a.if pdf was successfuly opened, then store number of pages in file.respective number of pages
+		//the two arrays fileList and PageNumberArray will store the pdf file and it's 
+		pageNumberArray[fileNum]=pdf_doc_temp.numPages;
+		
+		//4.create the fields
+		stringField+='<label >This file,'+fileArr[fileNum].name+', has: '+pdf_doc_temp.numPages+' pages</label><br><input id="input'+fileNum+'" type="number"><br>';
+		//3.increment the file number
+		console.log(stringField);
+		fileNum++;
+		//5.make a recursive call
+		createNumReportFields(fileArr,fileNum);
+	},function(reason){
+		//can be used for error checking . If number is 0 then output error that pdf could not be opened. User should try again
+		pageNumberArray[fileNum]=0;
+		stringField+='<label >This file,'+fileArr[fileNum].name+', has an error '+reason+'. Please select another file.</label><br><input id="errorPdf'+fileNum+'" type="number"><br>' ;
+		console.log(stringField);
+		fileNum++;
+		//call itself with next file in fileList
+		createNumReportFields(fileArr,fileNum);
+	});
+
+}
+
+/* *******************************************************************************************************************************/
+
+/*RENDER USING SVG
+// Get div#the-svg
+  var container = document.getElementById('the-svg');
+
+  // Set dimensions
+  container.style.width = viewport.width + 'px';
+  container.style.height = viewport.height + 'px';
+
+  // SVG rendering by PDF.js
+  page.getOperatorList()
+    .then(function (opList) {
+      var svgGfx = new PDFJS.SVGGraphics(page.commonObjs, page.objs);
+      return svgGfx.getSVG(opList, viewport);
+    })
+    .then(function (svg) {
+      container.appendChild(svg);
+    });
+
+});*/
 
 </script>
+
+
 </body>
 
 </html>
