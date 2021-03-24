@@ -15,7 +15,12 @@
 		<!--<script src="./emailtest.js"></script>-->
 		<script src= "./smtp.js"></script> 
 		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>-->
-
+	<style>
+		label {
+			color: Blue;
+		}
+	
+	</style>
 	</head>
 
 <body class="container-fluid">
@@ -28,17 +33,34 @@
 
 	<form id="renderpdfForm">
 	<!-- The `multiple` attribute lets users select multiple files. -->
-		<label for="filePdf">Enter the file location:</label><br>
-		<input type="file" id="file-selector" name="filePdf" multiple><br>
-		
+		<div class="form-group col-sm-6">
+			<label class="control-label" for="filePdf">Enter the file location:</label><br>
+			<input type="file" class="form-control" id="file-selector" name="filePdf" multiple><br>
+		</div>
+		<!-- Check boxes for reports -->
+			<div class="checkbox col-sm-6">
+					<label class="control-label" for="filePdf" style="font-size:18px;">Check the columns you want removed from the report:</label><br>
+					<label for="stats_line"> <input type="checkbox" class="" id="stats_line" name="stats_line" value="">Statistics Line</label><br>
+					<label for="average_score"> <input type="checkbox" class="" id="average_score" name="average_score" value="">Average Score</label>
+					<label for="average_score_text"> <input type="checkbox" class="" id="average_score_text" name="average_score_text" value="">Average Score Text</label><br>
+					 <label for="performance_logic_key"> <input type="checkbox" class="" id="performance_logic_key" name="performance_logic_key" value="">Performance Logic Key</label><br>
+				 <label for="average_column"> <input type="checkbox" class="" id="average_column" name="average_column" value="">Average Column</label><br>
+				 <label for="correct_column"> <input type="checkbox" class="" id="correct_column" name="correct_column" value="">CORRECT Column</label>
+				 <label for="correct_column_graphics"> <input type="checkbox" class="" id="correct_column_graphics" name="correct_column_graphics" value="">CORRECT Column Graphics</label><br><br>
+					
+				
+				 
+			</div>
+		<div class="form-group col-sm-12">
 	  <!--<label for="numReports">Enter the number of reports that will be sent out:</label><br>
 	  <input type="number" id="numReports" name="numReports" ><br>-->
 	  <label for="emailPdf">Enter your email address:</label><br>
 	  <input type="email" id="emailPdf" name="emailPdf" ><br>
 	   <label for="passwordPdf">Enter your email password:</label><br>
 	  <input type="password" id="passwordPdf" name="passwordPdf" ><br><br>
+	  
 	  <input type="submit">
-  
+	</div>
 	</form>
 
 </div>
@@ -90,6 +112,16 @@
 	// Asynchronous download of PDF
 	
 	pdf="";
+	//Global variables for deterining whic sections of report should be excluded
+		stats_line=false;
+		average_score=false;
+		average_score_text=false;
+		performance_logic_key=false;
+		average_column=false;
+		correct_column=false;
+		correct_column_graphics=false;
+		
+	
 	/* *******************************************************************************************/
 	//2.Perform data validation using Jquery mainly, within the document.ready
 	$(document).ready(function(){
@@ -197,6 +229,16 @@
 			//3c. validate number of reports
 			validateNumReports(fileList,pageNumberArray);
 			console.log("Does execution stop");
+			//get checkboxes with columns/line to remove and 
+				stats_line=document.getElementById("stats_line").checked;
+				average_score=document.getElementById("average_score").checked;
+				average_score_text=document.getElementById("average_score_text").checked;
+				performance_logic_key=document.getElementById("performance_logic_key").checked;
+				average_column=document.getElementById("average_column").checked;
+				correct_column=document.getElementById("correct_column").checked;
+				correct_column_graphics=document.getElementById("correct_column_graphics").checked;
+				
+			
 			//take UN and password
 			if(validateNumReportsTrue){
 				masterEmail=$("#emailPdf").val();
@@ -597,7 +639,7 @@ var scale = 1.33;
 			let ElementWidth2=0;
 			let ElementHeight2=0;
 			
-			//REMOVE AVERAGE COLUMN ALL THE WAY TO THE END, catch AVERAGE ...use half of imgWidth
+			//REMOVE AVERAGE COLUMN, catch AVERAGE ...use half of Width of AVERAGE
 			let xCoordinate3=0;
 			let yCoordinate3=0;
 			let ElementWidth3=0;
@@ -608,6 +650,12 @@ var scale = 1.33;
 			let yCoordinate4=0;
 			let ElementWidth4=0;
 			let ElementHeight4=0;
+			
+			//REMOVE Correct column graphics,nothing to catch, simply remove a column width from the width of the pdf
+			let xCoordinate5=0;
+			let yCoordinate5=0;
+			let ElementWidth5=0;
+			let ElementHeight5=0;
 			 /* **************************************************************************************/
 			
 			
@@ -686,7 +734,28 @@ var scale = 1.33;
 						console.log("My Score Matched. Y: "+yCoordinate1+ "X "+xCoordinate1);
 			
 					}
-					 
+					
+					//Match the MY SCORE Column and get its width and coordinates in case the very last column needs to be removed
+					if(text.items[j].str=="MY SCORE"){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						xCoordinate5=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCoordinate5=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						ElementWidth5=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						ElementHeight5=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						console.log("My Score Column Matched. Y: "+yCoordinate5+ "X "+xCoordinate5);
+			
+					}
 					 
 					if(text.items[j].str.startsWith("Overall, you scored")){
 						//console.log(parseInt(text.items[j].transform[4]));
@@ -750,7 +819,7 @@ var scale = 1.33;
 						// coor1=parseInt(text.items[j].transform[5])*1.33;
 						//ctx.fillRect(coor,370,70,(imgHeight/2));
 						//yCorPerLogic=20;
-						console.log("My Score Matched. Y: "+yCoordinate4+ "X "+xCoordinate4);
+						console.log("CATEGORY. Y: "+yCoordinate4+ "X "+xCoordinate4);
 			
 					}
 					 
@@ -812,9 +881,19 @@ var scale = 1.33;
 			ctx.fillStyle = "#FFFFFF";
 			
 			
-			/* CODE FOR REMOVING RANDOM ELEMENT******************************************/
+			/* CODE FOR REMOVING RANDOM ELEMENT
+				stats_line=false;
+				average_score=false;
+				average_score_text=false;
+				performance_logic_key=false;
+				average_column=false;
+				correct_column=false;
+				correct_column_graphics=false;
+			
+			
+			******************************************/
 			//REMOVE STATISTICS STARTING WITH : StdDev
-			if(yCoordinate>0){
+			if(yCoordinate>0 && stats_line){
 				//Subtract the y coordinates from the image height and correct columns to get the starting y coordinate for the correct column
 				yCoordinate=Math.abs(imgHeight-yCoordinate)+10;
 				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
@@ -823,7 +902,7 @@ var scale = 1.33;
 			}	
 			
 			//REMOVE THE AVERAGE SCORE next to the my score section.
-			if(yCoordinate1>0){
+			if(yCoordinate1>0 && average_score){
 				/* Since the y coordintes of the pdf doc start at the bottom of the page(0) and moves to the start(page/img heiegt). This coordinate system is reversed when 
 					drawing on the canvas where 0, is top left rather than bottom left aswith the pdf system.
 					To therefore get the starting Y coordinate for the rectangle I take the height of the image(e.g 700) and subtract the y coordinate of the my score field(e.g614)
@@ -832,12 +911,12 @@ var scale = 1.33;
 						The true height of the my Average section may be about 60..30 for the percentage(36.50%), 9 for the my score text and 10 in case there is a number below.*/
 				yCoordinate1=Math.abs(imgHeight-yCoordinate1)-40;
 				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
-				ctx.fillRect(xCoordinate1+(ElementWidth1*2),yCoordinate1,(ElementWidth1*4),ElementHeight1+68);
+				ctx.fillRect(xCoordinate1+(ElementWidth1*2),yCoordinate1,(ElementWidth1*4),ElementHeight1+66);
 				console.log("Y COORDINATE IS "+yCoordinate1);
 			}
 			
 			//REMOVE THE TEXT "Overall you scored below/above class average"....
-			if(yCoordinate2>0){
+			if(yCoordinate2>0 && average_score_text){
 				yCoordinate2=Math.abs(imgHeight-yCoordinate2)+10;
 				//Draw the rectangle: x coor, y coor, width of rectangle is width of the canvas without scaling, height is double the height of the first line in order
 				// to capture the line below
@@ -845,35 +924,48 @@ var scale = 1.33;
 				console.log("Y COORDINATE IS "+yCoordinate2);
 			}
 			
-			//REMOVE THE AVERAGE COLUMN AND EVRYTHING AFTER IT
-			if(yCoordinate3>0){
-				//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
-				yCoordinate3_1=Math.abs(yCorUsername-yCoordinate3);
+			//REMOVE THE AVERAGE COLUMN
+			if(yCoordinate3>0 && average_column){
+				//Subtract the y coordinate of the Average column from the imgae height...Add back 20 to account for the 20 subtracted at the top
+				let yCoordinate3_1=Math.abs(imgHeight-yCoordinate3);
 				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
-				ctx.fillRect(xCoordinate3,(yCoordinate3_1+20),ElementWidth4*4.5,Math.abs(yCoordinate3-yCorPerLogic));
-				console.log("FROM Y Coordinate 3 x: "+xCoordinate3+"y: "+(yCoordinate3_1+20)+"W:"+ElementWidth4*4.5+"H:"+Math.abs(yCoordinate3-yCorPerLogic));
+				ctx.fillRect(xCoordinate3,(yCoordinate3_1+4),ElementWidth4+2,Math.abs(yCoordinate3-yCorPerLogic)-10);
+				console.log("FROM X Coordinate 3 x: "+xCoordinate3+"y: "+(yCoordinate3_1+4)+"W:"+(ElementWidth4+2)+"H:"+Math.abs(yCoordinate3-yCorPerLogic)-10);
 			}
 			
 			//REMOVE THE DOING WELL....
-			if(yCoordinate4>0){
+			if(yCoordinate4>0 && performance_logic_key){
 				//Subtract the height of the canvas from the y coordinate of the Ctaegory columns to get the starting y coordinate for the CATEGORY LINE column, subtract out the height of the category column to get the row above
-				yCoordinate4_1=Math.abs(imgHeight-yCoordinate4);
+					//ctx.fillStyle = "#000000";
+				let yCoordinate4_1=Math.abs(imgHeight-yCoordinate4);
 				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
-				ctx.fillRect(xCoordinate4+(imgWidth*0.5),(yCoordinate4_1-(ElementHeight4)),imgWidth*0.85,ElementHeight4+5);
+				ctx.fillRect(xCoordinate4+(imgWidth*0.25),(yCoordinate4_1-(ElementHeight4)),imgWidth*0.85,ElementHeight4+5);
+				console.log("Performance logic key: "+yCoordinate4 +" YPerlogic "+yCoordinate4_1);
 			}
 			
+			//REMOVE THE CORRECT COLUMN
+			if(yCorCorrect>0 && correct_column){
+				//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+				//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
+				let yCoor=Math.abs(imgHeight-yCorCorrect);
+				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
+				ctx.fillRect(xCorCorrect,(yCoor+4),xWidthCorrect+2,Math.abs(yCorCorrect-yCorPerLogic)-10);
+				console.log("xStart: "+xCorCorrect + "xWidth: "+ xWidthCorrect + "Height: "+Math.abs(yCorCorrect-yCorPerLogic)+"start y: "+yCoor);
+				console.log(imgWidth  +" :" + imgHeight);
+				console.log("YCorrect: "+yCorCorrect +" YPerLogic "+yCorPerLogic);
+			}
 			
+			//REMOVE THE CORRECT COLUMN GRAPHICS, uses the MY SCORE COLUMN as a reference
+			if(yCoordinate5>0 && correct_column_graphics){
+				ctx.fillStyle = "#000000";
+				//get starting y coordinate of MY SCORE column
+				let yCoordinate5_1=Math.abs(imgHeight-yCoordinate5);
+				ctx.fillRect(xCoordinate5+(ElementWidth5*5),(yCoordinate5_1+7),ElementWidth5+4,Math.abs(yCoordinate5-yCorPerLogic)-10);
+			}
 		/*  CODE FOR REMOVING RANDOM ELEMENT********************************************/
 			
 				ctx.fillStyle = "#FFFFFF";
-				//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
-			//Subtract the y coordinates of the username and correct columns to get the starting y coordinate for the correct column
-			yCoor=Math.abs(yCorUsername-yCorCorrect);
-			//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
-			ctx.fillRect(xCorCorrect,(yCoor+20),xWidthCorrect+2,Math.abs(yCorCorrect-yCorPerLogic)-10);
-			console.log("xStart: "+xCorCorrect + "xWidth: "+ xWidthCorrect + "Height: "+Math.abs(yCorCorrect-yCorPerLogic)+"start y: "+yCoor);
-			console.log(imgWidth  +" :" + imgHeight);
-			console.log("YCorrect: "+yCorCorrect +" YPerLogic "+yCorPerLogic);
+
 			var img = new Image(); 
 			img.src = canvas.toDataURL("image/jpeg"); 
 			img.setAttribute("width",imgWidth);
