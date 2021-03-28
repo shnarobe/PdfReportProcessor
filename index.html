@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<script  src="./pdf.js"></script>
 	
 	</head>
 
 <body>
 <h1>PDF.js 'Hello, world!' example</h1>
+<button onClick="ETest()"> Click me </button>
 
 <canvas id="the-canvas"></canvas>
 
@@ -51,7 +53,29 @@ loadingTask.promise.then(function(pdf) {
   console.error(reason);
 });
 
-
+function ETest(){
+		//alert(location);
+		$.ajax({
+				   dataType:"text",
+				   url:"sendMail.php",
+				   method:"POST",
+				   data:{action:"sendstatement",recipient:"krobert4@sgu.edu"},
+				   success:function(data){
+					   console.log("HERE"+data);
+					var f=JSON.parse(data);
+					console.log(f);
+					if(!f.success){
+						//alert("Mail not sent. Try again");
+						//var d=window.setTimeout(function(){document.location.reload(true);},100);
+					//console.log(f.error);
+					}
+					else{
+					//alert("mail sent!");	
+					//var d=window.setTimeout(function(){document.location.reload(true);},100);
+					}
+			}
+			});
+			}
 </script>
 </body>
 

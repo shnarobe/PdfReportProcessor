@@ -12,6 +12,7 @@
 		
 		<script  src="./pdf.js"></script>
 		<script src="./jspdf.debug.js"></script>
+		<script src="./FileSaver.js"></script>
 		<!--<script src="./emailtest.js"></script>-->
 		<script src= "./smtp.js"></script> 
 		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>-->
@@ -121,8 +122,11 @@
 		correct_column=false;
 		correct_column_graphics=false;
 		
-	
+	emailArr=[];
+	string="";
+	EmailText="";
 	/* *******************************************************************************************/
+	
 	//2.Perform data validation using Jquery mainly, within the document.ready
 	$(document).ready(function(){
 		//fileList="";
@@ -614,7 +618,7 @@ var scale = 1.33;
 			imgHeight= viewport.height;
 			let str=[];
 			let email="";
-			let emailArr=[];
+			emailArr=[];
 			/*IF THE CORRECT COLUMN IS NOT PRESENT THEn USE DEFAULTS*/
 			xCorCorrect=0;
 			yCorCorrect=0;
@@ -979,9 +983,12 @@ var scale = 1.33;
 			docimg.addImage({imageData:img,format:"JPEG",x:0,y:10,compression:"NONE"});
 		
 			//create pdf and output to string,base64 encoding
-			var string=docimg.output('datauri');
+			var string1=docimg.output('datauristring');
+			let string=string1.split("base64,");
+			console.log(string);
+			//let r57= string.save("test111.pdf");
 		
-			Email.send({/*3.1 SEND AN EMAIL WITH THE IMAGE THAT WAS CAPTURED FROM THE HTML CANVAS*/
+			/*Email.send({/*3.1 SEND AN EMAIL WITH THE IMAGE THAT WAS CAPTURED FROM THE HTML CANVAS
 			Host: "smtp.office365.com",
 			Username : masterEmail,
 			Password : masterPassword,
@@ -995,84 +1002,10 @@ var scale = 1.33;
 				data : string
 
 			}]
-			}).then(function (message) { 
-				//called after successfully sending a student email
-			  
-				//clear the canvas
-				/*if (context) {
-					context.clearRect(0, 0, canvas.width, canvas.height);
-					context.beginPath();
-				}*/
-				//remove the image
-				img.remove();
-				//add entry to report
-				let tempTxt=emailArr[1];
-				//check that returned code is 'OK', else an error occurred.
-				if(message=="OK"){  
-						//after a report is successfully sent then update the counter
-						successCounter=successCounter + 1;
-						console.log("mail sent successfully");
-						console.log("after repriot pdf");
-						//once report is successfully mailed then add email to report
-						reportPdf.text(successCounter+". "+tempTxt+ " :Report successfully sent.",xCor,yCor+10);
-						console.log("after repriot pdf");
-						//move  cursor to next line
-						yCor=yCor+10;
-						//if yCor position is >250mm then go to next page
-						if(yCor>230){
-						//create new page with default values to pdf and reset y coordinate
-							reportPdf.addPage();
-							//restart staring coordinate
-							yCor=10;
-						}
-						console.log("Ycol"+yCor);
-						//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
-						counter=counter+1;
-						//increase page number by 1. this is the global variable keeping track of the number of pages in the pdf
-						pageNume=pageNume+1;
-						//out success essage to screen
-						printElementRenderPdf(counter+". "+"Email successfully sent to: "+tempTxt);
-						//reset retry email variable to handle the case where an unsuccessful email was successfully sent on the other tries
-						retryEmail=1;
-						//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
-						GateKeeper(counter);
-					
-				}
-				else{
-					//try sending failed email up to three times
-					if(retryEmail<=3){
-						//1. First remove the canvas element
-						canvas.remove();
-						//img.remove();
-						
-						console.log("The value of PageNume in failure: " + pageNume +"Attempting to resend: "+retryEmail+"counter: "+counter);
-						//3. Call gate keeper again with same value of counter
-						GateKeeper(counter);
-						retryEmail++;
-					}
-					//if third attempt failed then place in report
-					else{
-						//if email failed, increment counter and write username
-						failureCounter = failureCounter + 1;
-						failureArray.push(emailArr[1]+" "+ message);
-						console.log(message+"FAILURE ARRAY LENGTH: "+failureArray.length);
-						//add failed pdf and email address as key value pair to object for resending
-						//failureObj[emailArr[1]] = string;
-						//reset retry email variable
-						retryEmail=1;
-						//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
-						counter=counter+1; //in this case after three tries the report still failed so move on to the next one
-						//move on to the next page
-						pageNume=pageNume+1;
-						printElementRenderPdf(counter+". "+"Email failed: "+emailArr[1]);
-						//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
-						GateKeeper(counter);
-					}
-				}
-				//increment after every email is sent
-				//counter=counter+1;
-				
-        }); 
+			})*/
+			/* ********************************************************/
+			phpMailer(emailArr[1],EmailText,string[1],totalPages,img,canvas);
+			
 		
 	//
     });
@@ -1175,6 +1108,114 @@ function createNumReportFields(fileArr,fileNum){
     });
 
 });*/
+function phpMailer(rec,txt,attach,fnum,img,canvas){
+
+	//let MailPromise= new Promise(function (Resolve,Reject){
+				$.ajax({
+						   dataType:"text",
+						   url:"sendMail.php",
+						   method:"POST",
+						   data:{action:"sendstatement",recipient:rec,body:txt,attachment:attach,fileNumber:fnum},
+						   success:function(data){
+							console.log("HERE"+data);
+							var f=JSON.parse(data);
+							console.log(f);
+							/* **********************************************************************/
+											//called after successfully sending a student email
+										  
+											//clear the canvas
+											/*if (context) {
+												context.clearRect(0, 0, canvas.width, canvas.height);
+												context.beginPath();
+											}*/
+											//remove the image
+											img.remove();
+											//add entry to report
+											let tempTxt=emailArr[1];
+											//check that returned code is 'OK', else an error occurred.
+											if(f==="OK"){  
+													//after a report is successfully sent then update the counter
+													successCounter=successCounter + 1;
+													console.log("mail sent successfully");
+													console.log("after repriot pdf");
+													//once report is successfully mailed then add email to report
+													reportPdf.text(successCounter+". "+tempTxt+ " :Report successfully sent.",xCor,yCor+10);
+													console.log("after repriot pdf");
+													//move  cursor to next line
+													yCor=yCor+10;
+													//if yCor position is >250mm then go to next page
+													if(yCor>230){
+													//create new page with default values to pdf and reset y coordinate
+														reportPdf.addPage();
+														//restart staring coordinate
+														yCor=10;
+													}
+													console.log("Ycol"+yCor);
+													//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
+													counter=counter+1;
+													//increase page number by 1. this is the global variable keeping track of the number of pages in the pdf
+													pageNume=pageNume+1;
+													//out success essage to screen
+													printElementRenderPdf(counter+". "+"Email successfully sent to: "+tempTxt);
+													//reset retry email variable to handle the case where an unsuccessful email was successfully sent on the other tries
+													retryEmail=1;
+													//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
+													GateKeeper(counter);
+												
+											}
+											else{
+												//try sending failed email up to three times
+												if(retryEmail<=3){
+													//1. First remove the canvas element
+													canvas.remove();
+													//img.remove();
+													
+													console.log("The value of PageNume in failure: " + pageNume +"Attempting to resend: "+retryEmail+"counter: "+counter);
+													//3. Call gate keeper again with same value of counter
+													GateKeeper(counter);
+													retryEmail++;
+												}
+												//if third attempt failed then place in report
+												else{
+													//if email failed, increment counter and write username
+													failureCounter = failureCounter + 1;
+													failureArray.push(emailArr[1]+" "+ f);
+													console.log(f+"FAILURE ARRAY LENGTH: "+failureArray.length);
+													//add failed pdf and email address as key value pair to object for resending
+													//failureObj[emailArr[1]] = string;
+													//reset retry email variable
+													retryEmail=1;
+													//counter keeps track of the numbr of reports processed. Those reports can be sent successfully or failed
+													counter=counter+1; //in this case after three tries the report still failed so move on to the next one
+													//move on to the next page
+													pageNume=pageNume+1;
+													printElementRenderPdf(counter+". "+"Email failed: "+emailArr[1]);
+													//call GateKeeper passing in the number of reports already sent, if that is equal to numReports then stop and generate report
+													GateKeeper(counter);
+												}
+											}
+											//increment after every email is sent
+											//counter=counter+1;
+											
+									
+															
+															
+															
+															
+								
+								/* **********************************************************************/
+							
+							
+					}
+					});
+				
+		
+		
+		
+			//});
+
+
+}
 
 </script>
 
