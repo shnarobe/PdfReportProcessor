@@ -17,7 +17,7 @@
 		<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>-->
 	<style>
 		label {
-			color: Blue;
+			color: Black;
 		}
 	
 	</style>
@@ -957,7 +957,7 @@ var scale = 1.33;
 			
 			//REMOVE THE CORRECT COLUMN GRAPHICS, uses the MY SCORE COLUMN as a reference
 			if(yCoordinate5>0 && correct_column_graphics){
-				ctx.fillStyle = "#000000";
+				//ctx.fillStyle = "#000000";
 				//get starting y coordinate of MY SCORE column
 				let yCoordinate5_1=Math.abs(imgHeight-yCoordinate5);
 				ctx.fillRect(xCoordinate5+(ElementWidth5*5),(yCoordinate5_1+7),ElementWidth5+4,Math.abs(yCoordinate5-yCorPerLogic)-10);
@@ -986,7 +986,7 @@ var scale = 1.33;
 			Username : masterEmail,
 			Password : masterPassword,
 			To : emailArr[1],
-			From : masterEmail,
+			From :"blinesupport@sgu.edu",
 			Subject : "ExamSoft Strengths and Opportunities Report Released.",
 			Body : EmailText,
 			Attachments : [
