@@ -357,9 +357,12 @@
 					retryEmail=1;
 					pageNume=1;
 					//reportPdf1 = new jsPDF();
-			
+					numReports=numReportArr[masterCounter];
+					console.log("numreports before starting point"+numReports);
+					//console.log("success");
+					testCredentials(masterEmail,masterPassword);
 				//7c. Create promise for verifying credentials
-						validateEmail=new Promise(function(Resolve,Reject){
+						/*validateEmail=new Promise(function(Resolve,Reject){
 							//7d.Try sending an email using the credentials entered
 							Email.send({
 							Host: "smtp.office365.com",
@@ -384,13 +387,13 @@
 								}
 							
 							});
-						});//end promise creation,validateEmail
+						});*/ //end promise creation,validateEmail
 						/*	Promise.then() takes two arguments, a callback for success and another for failure.
 							Both are optional, so you can add a callback for success or failure only.
 						*/
 			
 					//8. Call the promise to validate email and wait for it's completion
-						validateEmail.then(
+						/*validateEmail.then(
 							
 							//8a. The promise returns the functions with the Resolve and Reject message
 							function(msg){
@@ -402,7 +405,7 @@
 								/* IMPORTANT: after successful verifcation, the pdf_doc object will be assigned to the global pdf object for reference throughout the application.
 								Then startPoint can be called.The masterCounter variable stores the number of files that have been processed so far*/
 								//get the file name from the fileList array and create the url
-								fileUrl="./" + fileList[masterCounter].name;
+								/*fileUrl="./" + fileList[masterCounter].name;
 								//download and open the pdf 
 								pdfjsLib.getDocument(fileUrl).promise.then(function(pdf_doc_temp1) {
 									//once succcessfully opened, assign to global variable pdf
@@ -433,7 +436,7 @@
 									return;
 								}
 							}
-					);//end validateEmail promise
+					);*///end validateEmail promise
 			
 			
 			}
@@ -978,8 +981,10 @@ var scale = 1.33;
 		 
 			imgWidth=imgWidth - 30;
 			imgHeight= imgHeight - 30;
-			//add image from cancas to pdf
+			//add image from canvas to pdf
 			docimg= new jsPDF('p','pt','a4');
+			//try adding canvas directly to pdf
+			
 			docimg.addImage({imageData:img,format:"JPEG",x:0,y:10,compression:"NONE"});
 		
 			//create pdf and output to string,base64 encoding
@@ -1118,7 +1123,7 @@ function phpMailer(rec,txt,attach,fnum,img,canvas){
 						   data:{action:"sendstatement",recipient:rec,body:txt,attachment:attach,fileNumber:fnum},
 						   success:function(data){
 							console.log("HERE"+data);
-							var f=JSON.parse(data);
+							var f=data;//JSON.parse(data);
 							console.log(f);
 							/* **********************************************************************/
 											//called after successfully sending a student email
@@ -1179,7 +1184,7 @@ function phpMailer(rec,txt,attach,fnum,img,canvas){
 												else{
 													//if email failed, increment counter and write username
 													failureCounter = failureCounter + 1;
-													failureArray.push(emailArr[1]+" "+ f);
+													failureArray.push(emailArr[1]+" ");
 													console.log(f+"FAILURE ARRAY LENGTH: "+failureArray.length);
 													//add failed pdf and email address as key value pair to object for resending
 													//failureObj[emailArr[1]] = string;
@@ -1217,6 +1222,65 @@ function phpMailer(rec,txt,attach,fnum,img,canvas){
 
 }
 
+
+function testCredentials(un,pw){
+console.log("in test credentials");
+
+					$.ajax({
+						   dataType:"text",
+						   url:"sendMail.php",
+						   method:"POST",
+						   data:{action:"testCredentials",UN:un,PW:pw},
+						   success:function(data){
+							console.log("HERE"+data);
+							var g=data;//JSON.parse(data);
+							console.log("TESTing"+g);
+									if(g==="OK"){
+											/* IMPORTANT: after successful verifcation, the pdf_doc object will be assigned to the global pdf object for reference throughout the application.
+											Then startPoint can be called.The masterCounter variable stores the number of files that have been processed so far*/
+											//get the file name from the fileList array and create the url
+											fileUrl="./" + fileList[masterCounter].name;
+											//download and open the pdf 
+											pdfjsLib.getDocument(fileUrl).promise.then(function(pdf_doc_temp1) {
+												//once succcessfully opened, assign to global variable pdf
+												pdf=pdf_doc_temp1;
+												//possible store the numof reports entered at the begiinging in local array for access here
+												//t_pdf="input"+masterCounter;
+												//numReports=$(t_pdf).val();
+												console.log("master Counter: "+masterCounter);
+												//8b. If the promise returns a success then begin sending reports by calling starting point
+												startingPoint(fileList[masterCounter].name);
+												masterCounter=masterCounter+1;
+												},
+												function(reason){
+													//give fatal error and proceed to send next report if available
+													alert("There was a fatal error!.The report "+ fileList[masterCounter].name+" . could not be loaded because of: " +reason);
+													masterCounter=masterCounter+1;
+													validateEmail_Start(fileList);
+												
+												}
+											);//end pdfjsLib promise
+									
+									
+									
+									}
+									else{
+											console.log("failure"+g);
+											//8c. If promise returns a failure, then alert user and return
+											//if(g=="Failure"){
+												alert("Your credentials were incorrect! "+g);
+												//return;
+											//}
+									}
+							
+							
+							}
+					});
+
+
+
+
+}
 </script>
 
 

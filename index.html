@@ -3,6 +3,7 @@
 	<head>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<script  src="./pdf.js"></script>
+	<script src="./jspdf.debug.js"></script>
 	
 	</head>
 
@@ -23,7 +24,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
 var loadingTask = pdfjsLib.getDocument(url);
 loadingTask.promise.then(function(pdf) {
   console.log('PDF loaded');
-  
+
   // Fetch the first page
   var pageNumber = 1;
   pdf.getPage(pageNumber).then(function(page) {
@@ -46,6 +47,16 @@ loadingTask.promise.then(function(pdf) {
     var renderTask = page.render(renderContext);
     renderTask.promise.then(function () {
       console.log('Page rendered');
+	  console.log(context.getImageData(0,0,canvas.width,canvas.height));
+	    docimg = new jsPDF('p','pt','a4');
+		var ee=context.getImageData(0,0,canvas.width,canvas.height);
+		console.log(docimg.getImageFileTypeByImageData(ee.data));
+		docimg.addImage({imageData:ee.data,format:"JPEG",x:0,y:10,compression:"NONE"});
+		
+		var string1=docimg.output('datauristring');
+			let string=string1.split("base64,");
+			console.log(string);
+		
     });
   });
 }, function (reason) {
@@ -53,6 +64,11 @@ loadingTask.promise.then(function(pdf) {
   console.error(reason);
 });
 
+	
+
+//j=new Canvas();
+//C1.width=canvas.width;
+//C1.height=canvas.height;
 function ETest(){
 		//alert(location);
 		$.ajax({
