@@ -1009,7 +1009,8 @@ var scale = 1.33;
 			}]
 			})*/
 			/* ********************************************************/
-			phpMailer(emailArr[1],EmailText,string[1],totalPages,img,canvas);
+			//pass in student's email,the body text,the pdf base64 encoded,totalPages asa counter(optional), the image and canvas objects, the materemail and password
+			phpMailer(emailArr[1],EmailText,string[1],masterEmail,masterPassword,img,canvas);
 			
 		
 	//
@@ -1113,17 +1114,17 @@ function createNumReportFields(fileArr,fileNum){
     });
 
 });*/
-function phpMailer(rec,txt,attach,fnum,img,canvas){
+function phpMailer(rec,txt,attach,ME,MP,img,canvas){
 
 	//let MailPromise= new Promise(function (Resolve,Reject){
 				$.ajax({
 						   dataType:"text",
 						   url:"sendMail.php",
 						   method:"POST",
-						   data:{action:"sendstatement",recipient:rec,body:txt,attachment:attach,fileNumber:fnum},
-						   success:function(data){
-							console.log("HERE"+data);
-							var f=data;//JSON.parse(data);
+						   data:{action:"sendstatement",recipient:rec,body:txt,attachment:attach,senderEmail:ME,senderPassword:MP},
+							complete:function(jqXHR,textStatus ){ //   //success:function(data){
+							console.log("HERE"+jqXHR.responseText);
+							var f=textStatus;//JSON.parse(data);
 							console.log(f);
 							/* **********************************************************************/
 											//called after successfully sending a student email
@@ -1138,7 +1139,7 @@ function phpMailer(rec,txt,attach,fnum,img,canvas){
 											//add entry to report
 											let tempTxt=emailArr[1];
 											//check that returned code is 'OK', else an error occurred.
-											if(f==="OK"){  
+											if(textStatus==="success" && jqXHR.responseText==="OK" ){  
 													//after a report is successfully sent then update the counter
 													successCounter=successCounter + 1;
 													console.log("mail sent successfully");
