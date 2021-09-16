@@ -70,7 +70,7 @@ $mail->addBCC("bcc@example.com");
 //$mail->addReplyTo('loans@forshorelending.com','reply');
 $mail->Username = $ME;                 // SMTP username
 $mail->Password = $MP; 
-$mail->setFrom('krobert4@sgu.edu');
+$mail->setFrom('krobert4@sgu.edu');//blinesupport@sgu.edu
 $mail->addAddress($receiver); //To address 
 //$mail->addAddress($useremail, $name);  // Add a recipient
 //$mail->addAddress('ellen@example.com');               // Name is optional

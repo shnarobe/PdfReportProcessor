@@ -1,2 +1,4 @@
 #Do not track pdf files
 *.pdf
+PHPMailer-master/**
+FileSaver.js
