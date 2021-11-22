@@ -47,7 +47,10 @@
 					 <label for="performance_logic_key"> <input type="checkbox" class="" id="performance_logic_key" name="performance_logic_key" value="">Performance Logic Key</label><br>
 				 <label for="average_column"> <input type="checkbox" class="" id="average_column" name="average_column" value="">Average Column</label><br>
 				 <label for="correct_column"> <input type="checkbox" class="" id="correct_column" name="correct_column" value="">CORRECT Column</label>
-				 <label for="correct_column_graphics"> <input type="checkbox" class="" id="correct_column_graphics" name="correct_column_graphics" value="">CORRECT Column Graphics</label><br><br>
+				 <label for="correct_column_graphics"> <input type="checkbox" class="" id="correct_column_graphics" name="correct_column_graphics" value="">CORRECT Column Graphics</label>
+				 <label for="begins_with_asterix"> <input type="checkbox" class="" id="begins_with_asterix" name="begins_with_asterix" value="">Remove any text beginning with an *</label>
+				  <!--<label for="remove_asterix"> <input type="checkbox" class="" id="remove_asterix" name="remove_asterix" value="">Remove all *'s in text(USE WITH CAUTION!)</label>-->
+				 <br><br>
 					
 				
 				 
@@ -121,6 +124,8 @@
 		average_column=false;
 		correct_column=false;
 		correct_column_graphics=false;
+		begins_with_asterix=false;
+		//remove_asterix=false;
 		
 	emailArr=[];
 	string="";
@@ -241,6 +246,8 @@
 				average_column=document.getElementById("average_column").checked;
 				correct_column=document.getElementById("correct_column").checked;
 				correct_column_graphics=document.getElementById("correct_column_graphics").checked;
+				begins_with_asterix=document.getElementById("begins_with_asterix").checked;
+				//remove_asterix=document.getElementById("remove_asterix").checked;
 				
 			
 			//take UN and password
@@ -461,9 +468,10 @@ function startingPoint(FN){
 	2. or download the PDF attachment on your device<br>
 	3. and open it using your preferred PDF software. <br><br>
 
-	If you encounter any issues, please contact Jason Lucas (jlucas001@sgu.edu), Krishna Robertson (krobert4@sgu.edu) and cc Kevin Parke (kparke2@sgu.edu).<br><br>
+	If you encounter any technical issues, please contact BLine Support at blinesupport@sgu.edu.<br><br>
 
 	Department of Clinical Skills.`;
+
 
 	//e=1;
 		//loop through entire list of pages
@@ -627,7 +635,12 @@ var scale = 1.33;
 			yCorCorrect=0;
 			xWidthCorrect=0;
 			yCorPerLogic=0;
-			/* */
+			/* AN IMPORTANT NOTE ABOUT COORDINATES:
+			The pdf document and library uses the bottom left of document to be 0,0, while the canvas methods in html use the top left as 0,0. This therefore means that
+			text close to the top would have a high y coordinate in the pdf but a low y coordinate in the html canvas. 
+			To therefore find the correct y coordinate to draw over text one must subtract the ycoordinate of the text from the image height. In practice, it is often
+			the case that exact calculation is off by about 10, so this is added to the y coordinate before drawing.
+			*/
 			/*Get coordinates for drawing over a random  area -REMOVE STATISTICS,catch StdDev******************************************************************/
 			let xCoordinate=0;
 			let yCoordinate=0;
@@ -663,6 +676,12 @@ var scale = 1.33;
 			let yCoordinate5=0;
 			let ElementWidth5=0;
 			let ElementHeight5=0;
+			
+			//REMOVE *This may not be your final score, catch the * at the start
+			let xCoordinate6=0;
+			let yCoordinate6=0;
+			let ElementWidth6=0;
+			let ElementHeight6=0;
 			 /* **************************************************************************************/
 			
 			
@@ -829,6 +848,25 @@ var scale = 1.33;
 						console.log("CATEGORY. Y: "+yCoordinate4+ "X "+xCoordinate4);
 			
 					}
+					
+					
+					if(text.items[j].str.startsWith("*")){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the * text
+						xCoordinate6=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the * text or line
+						yCoordinate6=parseInt(text.items[j].transform[5]) * scale;
+						//get the width of the * line. Add about 5 to the width jus to be sure to get the whole line
+						ElementWidth6=parseInt(text.items[j].width)*scale;
+						//Get the height of that line
+						ElementHeight6=parseInt(text.items[j].height)*scale;
+						console.log("*. Y: "+yCoordinate6+ "X "+xCoordinate6);
+			
+					}
 					 
 					 /* **************************************************************************************************************************************/
 				
@@ -867,7 +905,13 @@ var scale = 1.33;
 					
 					}
 					
+				  //******************This line replaces any * found in text with a blank. This is placed last to avoid interefing with any matching code above
+				  /*if(remove_asterix && (text.items[j].str.includes('*'))){
+					text.items[j].str=text.items[j].str.replace("*","");
+					console.log("* Found"+text.items[j].str);
 				  
+				  }*/
+				  //*********************************************************************************************
 				}
 	
 				
@@ -968,6 +1012,17 @@ var scale = 1.33;
 				//get starting y coordinate of MY SCORE column
 				let yCoordinate5_1=Math.abs(imgHeight-yCoordinate5);
 				ctx.fillRect(xCoordinate5+(ElementWidth5*5),(yCoordinate5_1+7),ElementWidth5+4,Math.abs(yCoordinate5-yCorPerLogic)-10);
+			}
+			
+			//REMOVE TEXT THAT BEGINS WITH ASTERIX
+			if(yCoordinate6>0 && begins_with_asterix){
+				//ctx.fillStyle = "#000000";
+				//get starting y coordinate of * line
+				//Added 10 to image height as 20 was subtracted from it above, so this imgHeight here is actually 20 less that it would normally be
+				let yCoordinate6_1=Math.abs((imgHeight+10)-yCoordinate6);
+				//draw the rectangle
+				ctx.fillRect(xCoordinate6,(yCoordinate6_1+2),ElementWidth6+4,ElementHeight6);
+				console.log("Y coordinate * "+ yCoordinate6_1+" The image height "+imgHeight);
 			}
 		/*  CODE FOR REMOVING RANDOM ELEMENT********************************************/
 			
