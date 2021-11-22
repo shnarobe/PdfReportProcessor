@@ -126,6 +126,8 @@
 		correct_column_graphics=false;
 		begins_with_asterix=false;
 		//remove_asterix=false;
+		uniqueUN=0;
+		//global variable for tracking number of unique usernames in every report
 		
 	emailArr=[];
 	string="";
@@ -882,6 +884,13 @@ var scale = 1.33;
 			
 					//if the username is found, then find the username and create the email address
 					if(text.items[j].str.startsWith("Username:")){
+						//increment by 1 each time UN is found
+						uniqueUN=uniqueUN+1;
+						if(uniqueUN>1){
+							//if more than 1 UN found exit program with error message
+							alert("FATAL ERROR- Two usernames found!!");
+							throw new Error("More than 1 username found on page: "+pageN+" on "+fName);
+						}
 						//console.log(text.items[j].str);
 						email=text.items[j].str;
 						emailArr=email.split(":");
