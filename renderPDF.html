@@ -889,6 +889,7 @@ var scale = 1.33;
 						if(uniqueUN>1){
 							//if more than 1 UN found exit program with error message
 							alert("FATAL ERROR- Two usernames found!!");
+							uniqueUN=0;//reset counter once error is thrown
 							throw new Error("More than 1 username found on page: "+pageN+" on "+fName);
 						}
 						//console.log(text.items[j].str);
@@ -1073,6 +1074,8 @@ var scale = 1.33;
 			}]
 			})*/
 			/* ********************************************************/
+			//reset uniqueUN counter at this point. It means that there weren't two UNs and so the sending is proceeding 
+			uniqueUN=0;
 			//pass in student's email,the body text,the pdf base64 encoded,totalPages asa counter(optional), the image and canvas objects, the materemail and password
 			phpMailer(emailArr[1],EmailText,string[1],masterEmail,masterPassword,img,canvas);
 			
