@@ -9,14 +9,14 @@ require '.\PHPMailer-master\src\SMTP.php';
 try{
 $mail = new PHPMailer(true); //Argument true in constructor enables exceptions
 $mail->isSMTP();                                      // Set mailer to use SMTP
-$mail->Host = 'smtp.office365.com';  // Specify main and backup SMTP servers
+$mail->Host = 'smtp.elasticemail.com';  // Specify main and backup SMTP servers
 $mail->SMTPAuth = true;                               // Enable SMTP authentication
 //Enable SMTP debugging.
 //$mail->SMTPDebug = 3; 
-//$mail->Username = 'krobert4@sgu.edu';                 // SMTP username
-//$mail->Password = '_Greyfalcon77@';                           // SMTP password
-$mail->SMTPSecure = 'tls';                            // Enable TLS encryption, `ssl` also accepted
-$mail->Port = 587;  
+$mail->Username = 'krobert4@sgu.edu';                 // SMTP username
+$mail->Password = 'CF18F38ECF83A10AE25D2F7024D5B9CB389C';                           // SMTP password
+//$mail->SMTPSecure = 'tls';                            // Enable TLS encryption, `ssl` also accepted
+$mail->Port = 2525;  
 }
 catch(Exception $e){
 	
@@ -70,7 +70,7 @@ $mail->addBCC("bcc@example.com");
 //$mail->addReplyTo('loans@forshorelending.com','reply');
 $mail->Username = $ME;                 // SMTP username
 $mail->Password = $MP; 
-$mail->setFrom('krobert4@sgu.edu');//blinesupport@sgu.edu
+$mail->setFrom('krobert4@sgu.edu');//blinesupport@sgu.edu  krobert4@sgu.edu
 $mail->addAddress($receiver); //To address 
 //$mail->addAddress($useremail, $name);  // Add a recipient
 //$mail->addAddress('ellen@example.com');               // Name is optional
