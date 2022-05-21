@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script  src="./pdf.js"></script>
+	<script src="./jspdf.debug.js"></script>
+	
+	</head>
+
+<body>
+<h1>PDF.js 'Hello, world!' example</h1>
+<button onClick="ETest()"> Click me </button>
+
+<canvas id="the-canvas"></canvas>
+
+<script>
+// If absolute URL from the remote server is provided, configure the CORS
+// header on that server.
+var url = './MultipleETs_ExamID_and_Monitor_Mock_Exam_(PW_-Mockexam1)-mini_version_12_30_2020.pdf';
+//./MultipleETs_ExamID_and_Monitor_Mock_Exam_(PW_-Mockexam1)-mini_version_12_30_2020.pdf';
+pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.js';
+// Loaded via <script> tag, create shortcut to access PDF.js exports.
+// Asynchronous download of PDF
+var loadingTask = pdfjsLib.getDocument(url);
+loadingTask.promise.then(function(pdf) {
+  console.log('PDF loaded');
+
+  // Fetch the first page
+  var pageNumber = 1;
+  pdf.getPage(pageNumber).then(function(page) {
+    console.log('Page loaded');
+    
+    var scale = 1.5;
+    var viewport = page.getViewport({scale: scale});
+
+    // Prepare canvas using PDF page dimensions
+    var canvas = document.getElementById('the-canvas');
+    var context = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // Render PDF page into canvas context
+    var renderContext = {
+      canvasContext: context,
+      viewport: viewport
+    };
+    var renderTask = page.render(renderContext);
+    renderTask.promise.then(function () {
+      console.log('Page rendered');
+	  console.log(context.getImageData(0,0,canvas.width,canvas.height));
+	    docimg = new jsPDF('p','pt','a4');
+		var ee=context.getImageData(0,0,canvas.width,canvas.height);
+		console.log(docimg.getImageFileTypeByImageData(ee.data));
+		docimg.addImage({imageData:ee.data,format:"JPEG",x:0,y:10,compression:"NONE"});
+		
+		var string1=docimg.output('datauristring');
+			let string=string1.split("base64,");
+			console.log(string);
+		
+    });
+  });
+}, function (reason) {
+  // PDF loading error
+  console.error(reason);
+});
+
+	
+
+//j=new Canvas();
+//C1.width=canvas.width;
+//C1.height=canvas.height;
+function ETest(){
+		//alert(location);
+		$.ajax({
+				   dataType:"text",
+				   url:"sendMail.php",
+				   method:"POST",
+				   data:{action:"sendstatement",recipient:"krobert4@sgu.edu"},
+				   success:function(data){
+					   console.log("HERE"+data);
+					var f=JSON.parse(data);
+					console.log(f);
+					if(!f.success){
+						//alert("Mail not sent. Try again");
+						//var d=window.setTimeout(function(){document.location.reload(true);},100);
+					//console.log(f.error);
+					}
+					else{
+					//alert("mail sent!");	
+					//var d=window.setTimeout(function(){document.location.reload(true);},100);
+					}
+			}
+			});
+			}
+</script>
+</body>
+
+</html>
