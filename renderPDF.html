@@ -1188,7 +1188,7 @@ function phpMailer(rec,txt,attach,ME,MP,img,canvas){
 	//let MailPromise= new Promise(function (Resolve,Reject){
 				$.ajax({
 						   dataType:"text",
-						   url:"sendMail.php",
+						   url:"sendMailCurl.php",
 						   method:"POST",
 						   data:{action:"sendstatement",recipient:rec,body:txt,attachment:attach,senderEmail:ME,senderPassword:MP},
 							complete:function(jqXHR,textStatus ){ //   //success:function(data){
@@ -1298,13 +1298,13 @@ console.log("in test credentials");
 
 					$.ajax({
 						   dataType:"text",
-						   url:"sendMail.php",
+						   url:"sendMailCurl.php",
 						   method:"POST",
 						   data:{action:"testCredentials",UN:un,PW:pw},
 						   success:function(data){
-							console.log("HERE"+data);
+							//console.log("HERE"+data);
 							var g=data;//JSON.parse(data);
-							console.log("TESTing"+g);
+							//console.log("TESTing"+g);
 									if(g==="OK"){
 											/* IMPORTANT: after successful verifcation, the pdf_doc object will be assigned to the global pdf object for reference throughout the application.
 											Then startPoint can be called.The masterCounter variable stores the number of files that have been processed so far*/
@@ -1335,10 +1335,10 @@ console.log("in test credentials");
 									
 									}
 									else{
-											console.log("failure"+g);
+											//console.log("failure"+g);
 											//8c. If promise returns a failure, then alert user and return
 											//if(g=="Failure"){
-												alert("Your credentials were incorrect! "+g);
+												//alert("Your credentials were incorrect! "+g);
 												//return;
 											//}
 									}
