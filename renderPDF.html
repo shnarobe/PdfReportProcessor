@@ -1208,7 +1208,7 @@ function phpMailer(rec,txt,attach,ME,MP,img,canvas){
 											//add entry to report
 											let tempTxt=emailArr[1];
 											//check that returned code is 'OK', else an error occurred.
-											if(textStatus==="success" && jqXHR.responseText==="OK" ){  
+											if(textStatus==="success" && jqXHR.responseText.includes("HTTP/1.1 202 Accepted") && jqXHR.responseText.endsWith("OK") ){  
 													//after a report is successfully sent then update the counter
 													successCounter=successCounter + 1;
 													console.log("mail sent successfully");

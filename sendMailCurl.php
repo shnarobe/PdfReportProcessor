@@ -55,11 +55,25 @@ function testCredentials($un,$pw){
 }
 
 
-function send_via_curl($to,$dat,$bodyText){
+function send_via_curl($to,$dat){
 	$ch = curl_init();
+	$bodyText=<<<MSG
+	
+Dear student,
+
+Your exam results have been released. To view the results:
+1. Open the PDF attachment in your web browser
+2. or download the PDF attachment on your device
+3. and open it using your preferred PDF software.
+
+If you encounter any technical issues, please contact BLine Support at blinesupport@sgu.edu.
+
+Department of Clinical Skills.
+MSG;
+	//build email message together with base64 encided pdf attachement
 $data='{
     "message": {
-        "subject": "Strengths and Opportunites Report.",
+        "subject": "ExamSoft Strengths and Opportunities Report Released.",
         "body": {
             "contentType": "Text",
             "content":"';
