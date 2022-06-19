@@ -1,5 +1,4 @@
 <?php
-$token="eyJ0eXAiOiJKV1QiLCJub25jZSI6Im1HTUZhVWxjQlBucFFSTzRvNTRqRW15UzFzelhuNC1TQ210S1lsOVFlaEkiLCJhbGciOiJSUzI1NiIsIng1dCI6ImpTMVhvMU9XRGpfNTJ2YndHTmd2UU8yVnpNYyIsImtpZCI6ImpTMVhvMU9XRGpfNTJ2YndHTmd2UU8yVnpNYyJ9.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTAwMDAtYzAwMC0wMDAwMDAwMDAwMDAiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8wNzY0YWJlOC02Mzk1LTQ1OGQtOGNiMy0xMDUwYzUxMmMwYjIvIiwiaWF0IjoxNjU0MjA2NjYwLCJuYmYiOjE2NTQyMDY2NjAsImV4cCI6MTY1NDIxMDc3NywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFWUUFxLzhUQUFBQUlCd2xYQ0lqVTM5aGV4a2ZYeUoyM2Z3VE9JZ2ZxUmRWU1k1bExEaGlHL2pIL1JxNDNjZUNmSHdZcCtBZ1NvdXd5YzR5WndWNmpsTVp3QnN0c1VCTXFlZ3UvRitVQmxqNkoyeEo2UFBaOEF3PSIsImFtciI6WyJwd2QiLCJtZmEiXSwiYXBwX2Rpc3BsYXluYW1lIjoiR3JhcGggRXhwbG9yZXIiLCJhcHBpZCI6ImRlOGJjOGI1LWQ5ZjktNDhiMS1hOGFkLWI3NDhkYTcyNTA2NCIsImFwcGlkYWNyIjoiMCIsImZhbWlseV9uYW1lIjoiUm9iZXJ0c29uIiwiZ2l2ZW5fbmFtZSI6IktyaXNobmEiLCJpZHR5cCI6InVzZXIiLCJpcGFkZHIiOiI3NC4xMTcuODYuMjAiLCJuYW1lIjoiS3Jpc2huYSBSb2JlcnRzb24iLCJvaWQiOiIzNDExYjFjYS0wNjBmLTRmZWMtODc2Yi1lZmMxOTA3NjBhZjMiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtNDAwNzA1NzEyNi0yMzA3MzA5MzEzLTc0ODUxMDg0Ni04NjI0OCIsInBsYXRmIjoiMyIsInB1aWQiOiIxMDAzMjAwMDlBRURBOTAyIiwicmgiOiIwLkFXNEE2S3RrQjVWampVV01zeEJReFJMQXNnTUFBQUFBQUFBQXdBQUFBQUFBQUFCdUFQSS4iLCJzY3AiOiJNYWlsLlNlbmQgb3BlbmlkIHByb2ZpbGUgVXNlci5SZWFkIGVtYWlsIiwic2lnbmluX3N0YXRlIjpbImttc2kiXSwic3ViIjoiYVpvdU8tQXNmckJMR19RZjN0aXRZcVc4eU90d3hFRWwzQnpqdzNlaTkzVSIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJOQSIsInRpZCI6IjA3NjRhYmU4LTYzOTUtNDU4ZC04Y2IzLTEwNTBjNTEyYzBiMiIsInVuaXF1ZV9uYW1lIjoia3JvYmVydDRAc2d1LmVkdSIsInVwbiI6Imtyb2JlcnQ0QHNndS5lZHUiLCJ1dGkiOiJhaDgtS2MxYm8wNjhUXzNKb0VaX0FBIiwidmVyIjoiMS4wIiwid2lkcyI6WyJiNzlmYmY0ZC0zZWY5LTQ2ODktODE0My03NmIxOTRlODU1MDkiXSwieG1zX3N0Ijp7InN1YiI6Il9TcDdmcFYtTHd4T2hNUHdwcEJOb1dlMUk2LVNUemVKcFVBa3V0YS1zM3cifSwieG1zX3RjZHQiOjE0MDQzOTkwNDh9.qDSwbJrJ__rMKGE03F_yJosP3IFT5_3wb-TRf8KW_EZWfIf5TFEpudTumSkplH8Ul7vj57stn7ZzMQO4Hb1r-QU8socOg1GPtlSLuT_0dX0t4bJI3pWlaReu33K6WTa5zHlOuWCZgYncep7vlYPU9i3vmAd_GXv9La8iZjtB8htrsL1BrSePZRK4yDIttYQSYbFT9GyehO4EMVYKGsTGrrdg4hgykH4VbIM4p_bVdPqYzcl0X2JwSmtCKu8PgUlVPsob38HU3_JyLWZZnSVTYdCEEgtnIH58S5oEdWS5x95C9RHgFqjtA5nTeRAbHuijnC-bFKgXTenIkVZRMxQ-bw";
 
 if($_SERVER['REQUEST_METHOD']=="POST"){
 	
@@ -25,7 +24,7 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
 
 
 function sendStatement($receiver,$att,$bodyText,$ME,$MP){
-	$proceed=send_via_curl($receiver,$att,$bodyText);
+	$proceed=send_via_curl($receiver,$att,$ME,$MP);
 
 
 	if($proceed){
@@ -41,7 +40,7 @@ function sendStatement($receiver,$att,$bodyText,$ME,$MP){
 
 
 function testCredentials($un,$pw){
-	$proceed=verify_via_curl();
+	$proceed=verify_via_curl($un,$pw);
 	//echo "proceed is" & $proceed;
 	
 
@@ -55,7 +54,7 @@ function testCredentials($un,$pw){
 }
 
 
-function send_via_curl($to,$dat){
+function send_via_curl($to,$dat,$Memail,$Mtoken){
 	$ch = curl_init();
 	$bodyText=<<<MSG
 	
@@ -116,8 +115,8 @@ $data.='"
     OPTION2 => $value2
 ));*/
 //curl -i -X GET \
-global $token;
-$tok=$token;
+//global $token;
+$tok=$Mtoken;
 curl_setopt_array(
     $ch, array( 
     CURLOPT_URL => "https://graph.microsoft.com/v1.0/me/sendMail",
@@ -151,7 +150,7 @@ else{
 }
 
 
-function verify_via_curl(){
+function verify_via_curl($email,$pass){
 	$ch = curl_init();
 $data='{
     "message": {
@@ -163,7 +162,9 @@ $data='{
         "toRecipients": [
             {
                 "emailAddress": {
-                    "address": "krobert4@sgu.edu"
+                    "address": "';
+$data.=$email;
+$data.='"
                 }
             }
         ]
@@ -180,7 +181,7 @@ $data='{
 ));*/
 //curl -i -X GET \
 global $token;
-$tok=$token;
+$tok=$pass;
 curl_setopt_array(
     $ch, array( 
     CURLOPT_URL => "https://graph.microsoft.com/v1.0/me/sendMail",
