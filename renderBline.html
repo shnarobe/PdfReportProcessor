@@ -46,7 +46,7 @@
 					<label for="stats_line"> <input type="checkbox" class="" id="stats_line" name="stats_line" value="">Statistics Line</label><br>
 					<label for="average_score"> <input type="checkbox" class="" id="average_score" name="average_score" value="">Average Score</label>
 					<label for="average_score_text"> <input type="checkbox" class="" id="average_score_text" name="average_score_text" value="">Average Score Text</label><br>
-					 <label for="performance_logic_key"> <input type="checkbox" class="" id="performance_logic_key" name="performance_logic_key" value="">Performance Logic Key</label><br>
+					 <label for="scenario_key"> <input type="checkbox" class="" id="scenario_key" name="scenario_key" value="">Remove Bline scenarios</label><br>
 				 <label for="average_column"> <input type="checkbox" class="" id="average_column" name="average_column" value="">Average Column</label><br>
 				 <label for="correct_column"> <input type="checkbox" class="" id="correct_column" name="correct_column" value="">CORRECT Column</label>
 				 <label for="correct_column_graphics"> <input type="checkbox" class="" id="correct_column_graphics" name="correct_column_graphics" value="">CORRECT Column Graphics</label>
@@ -122,7 +122,7 @@
 		stats_line=false;
 		average_score=false;
 		average_score_text=false;
-		performance_logic_key=false;
+		scenario_key=false;
 		average_column=false;
 		correct_column=false;
 		correct_column_graphics=false;
@@ -246,7 +246,7 @@
 				stats_line=document.getElementById("stats_line").checked;
 				average_score=document.getElementById("average_score").checked;
 				average_score_text=document.getElementById("average_score_text").checked;
-				performance_logic_key=document.getElementById("performance_logic_key").checked;
+				scenario_key=document.getElementById("scenario_key").checked;
 				average_column=document.getElementById("average_column").checked;
 				correct_column=document.getElementById("correct_column").checked;
 				correct_column_graphics=document.getElementById("correct_column_graphics").checked;
@@ -694,10 +694,12 @@ var scale = 1.33;
 			//if textContent succeeds then
 			textContent.then(function (text) {/*2.GET THE CONTENTS OF THE PAGE*/
 				console.log('Page content parsed' );
+				//run loop only once as first element is students name and no adjustments are needed
 				for(let j = 0; j < text.items.length; j++) {
 					//str.push(text.items[j].str);
 					
-					console.log(text.items[j]);
+					console.log(j+" " +text.items[j].str);
+					//alert(text.items[j].UserName);
 					//Find x and y coordinates of the correct column
 					if(text.items[j].str==("CORRECT")){
 						//console.log(parseInt(text.items[j].transform[4]));
@@ -872,24 +874,6 @@ var scale = 1.33;
 			
 					}
 					 
-					 //remove bline text
-					if(text.items[j].str.startsWith("Evaluatee")){
-						//console.log(parseInt(text.items[j].transform[4]));
-						//var ctx = canvas.getContext("2d");
-						//ctx.fillStyle = "#000000";
-						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
-						//x-coor, y-coor, width, h.
-						//get the x coordinate of the * text
-						xCoordinate7=parseInt(text.items[j].transform[4])*scale;
-						//get the y coordinate for the * text or line
-						yCoordinate7=parseInt(text.items[j].transform[5]) * scale;
-						//get the width of the * line. Add about 5 to the width jus to be sure to get the whole line
-						ElementWidth7=parseInt(text.items[j].width)*scale;
-						//Get the height of that line
-						ElementHeight7=parseInt(text.items[j].height)*scale;
-						console.log("*. Y: "+yCoordinate7+ "X "+xCoordinate7);
-			
-					}
 					 /* **************************************************************************************************************************************/
 				
 					if(text.items[j].str.startsWith("Performance Logic:")){
@@ -901,7 +885,77 @@ var scale = 1.33;
 				
 					}
 				
+					//////////////////////////////////////BLINE
+					
+					
+					 //if(text.items[0].str=="Abdah, Liliana"){
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the correct column
+						//xCoordinate1=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						//yCoordinate1=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						//ElementWidth1=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						//ElementHeight1=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						//console.log("My Score Matched. Y: "+yCoordinate1+ "X "+xCoordinate1);
+						//alert(text.items[0].str);
+								
 			
+					
+					
+					/////////////////////////////////////
+					
+					//BLINE
+					
+					//code for removing the scenarios
+					if(text.items[j].str.toLowerCase().trim()=="Scenarios".toLowerCase().trim()){
+						//alert("matched"+text.items[j].str);
+						//console.log(parseInt(text.items[j].transform[4]));
+						//var ctx = canvas.getContext("2d");
+						//ctx.fillStyle = "#000000";
+						//pdf rect coordinates: upper-left x, upper-left y, lower-right x and lower-right y.
+						//x-coor, y-coor, width, h.
+						//get the x coordinate of the scenarios column
+						xCoordinate4=parseInt(text.items[j].transform[4])*scale;
+						//get the y coordinate for the correct column
+						yCoordinate4=text.items[j].transform[5] * scale;
+						//get the width of the correct column
+						ElementWidth4=parseInt(text.items[j].width)*scale;
+						//set the default limit of the y coordinate to be 20 pixels
+						//There is at least a 20 px buffer between the correct column and the end of the page
+						ElementHeight4=parseInt(text.items[j].height)*scale;
+						// coor1=parseInt(text.items[j].transform[5])*1.33;
+						//ctx.fillRect(coor,370,70,(imgHeight/2));
+						//yCorPerLogic=20;
+						console.log("Scenarios. Y: "+yCoordinate4+ "X "+xCoordinate4);
+			
+					}
+
+					
+					
+				if(j==0){
+					for(let index=0;index<user_data.length;index++){
+						if(text.items[j].str.toLowerCase().trim()==user_data[index].ExamTaker.toLowerCase().trim()){
+								//alert(text.items[j].str+"->"+user_data[index].Username);
+								
+								emailArr[1]=user_data[index].Username.concat("@sgu.edu");
+								//alert(text.items[j].str+"->"+emailArr[1]);
+						}
+						
+						//emailArr[1]=emailArr[1].concat("@sgu.edu");
+					
+					}
+					}
+					
+					//////////////// END BLINE CODE////////////////////////////
 					//if the username is found, then find the username and create the email address
 					if(text.items[j].str.startsWith("Username:")){
 						//increment by 1 each time UN is found
@@ -966,7 +1020,7 @@ var scale = 1.33;
 				stats_line=false;
 				average_score=false;
 				average_score_text=false;
-				performance_logic_key=false;
+				scenario_key=false;
 				average_column=false;
 				correct_column=false;
 				correct_column_graphics=false;
@@ -1015,13 +1069,13 @@ var scale = 1.33;
 			}
 			
 			//REMOVE THE DOING WELL....
-			if(yCoordinate4>0 && performance_logic_key){
+			if(yCoordinate4>0 && scenario_key){
 				//Subtract the height of the canvas from the y coordinate of the Ctaegory columns to get the starting y coordinate for the CATEGORY LINE column, subtract out the height of the category column to get the row above
 					//ctx.fillStyle = "#000000";
 				let yCoordinate4_1=Math.abs(imgHeight-yCoordinate4);
-				//Draw the rectangle: x coor, y coor, width of rectangle is width of correct column, height is y coordinate of correct column - y coordinate of performance logic column
-				ctx.fillRect(xCoordinate4+(imgWidth*0.25),(yCoordinate4_1-(ElementHeight4)),imgWidth*0.85,ElementHeight4+5);
-				console.log("Performance logic key: "+yCoordinate4 +" YPerlogic "+yCoordinate4_1);
+				//Draw the rectangle: x coor, y coor, width of rectangle is width of the page, height is half the height of the page unscaled.
+				ctx.fillRect(xCoordinate4-5,(yCoordinate4_1-(ElementHeight4))-5,imgWidth*scale,imgHeight*.5);
+				console.log("scenario key Y: "+yCoordinate4 +" scenario key X"+yCoordinate4_1);
 			}
 			
 			//REMOVE THE CORRECT COLUMN
@@ -1053,21 +1107,6 @@ var scale = 1.33;
 				//draw the rectangle
 				ctx.fillRect(xCoordinate6,(yCoordinate6_1+2),ElementWidth6+4,ElementHeight6);
 				console.log("Y coordinate * "+ yCoordinate6_1+" The image height "+imgHeight);
-			}
-			
-			
-			//REMOVE THE BLINE TEXT
-			if(yCoordinate7>0 ){
-				//ctx.fillStyle = "#000000";
-				//get starting y coordinate of * line
-				//Added 10 to image height as 20 was subtracted from it above, so this imgHeight here is actually 20 less that it would normally be
-				let yCoordinate7_1=Math.abs((imgHeight+10)-yCoordinate7);
-				//draw the rectangle
-				ctx.fillRect(xCoordinate7+ElementWidth7+25,(yCoordinate7_1-35),imgWidth*.75,imgHeight*.75);
-				console.log("Y coordinate * "+ yCoordinate7_1+" The image height "+imgHeight);
-				
-				//last box below starts at : X-19 , Y-404
-				ctx.fillRect(10,400*scale,imgWidth*.75,imgHeight*.75);
 			}
 		/*  CODE FOR REMOVING RANDOM ELEMENT********************************************/
 			
@@ -1273,7 +1312,7 @@ function phpMailer(rec,txt,attach,ME,MP,img,canvas){
 											}
 											else{
 												//try sending failed email up to three times
-												if(retryEmail<=3){
+												if(retryEmail<=0){
 													//1. First remove the canvas element
 													canvas.remove();
 													//img.remove();
@@ -1384,6 +1423,13 @@ console.log("in test credentials");
 
 
 }
+
+
+
+
+
+
+user_data=[{"ExamTaker":"Robertson, Krishna","Username":"krobert4"}];
 </script>
 
 
